@@ -71,7 +71,7 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
     def _serve_static(self):
         path = self.path.split('?')[0]
         if path == '/':
-            path = '/动画精选平台.html'
+            path = '/index.html'
         filepath = os.path.join(DIR, path.lstrip('/'))
         if not os.path.exists(filepath):
             self.send_error(404, 'File not found')
