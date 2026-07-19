@@ -1718,20 +1718,30 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
       }
       if (!v) throw new Error('所有代理均不可用，请手动填写');
 
-      // ---- B站数据填充（智能解析版） ----
-      // 1. 标题清洗：去掉【】前缀/后缀
+      // ---- B站数据填充（智能解析版 v2） ----
+      // 1. 标题深度清洗
       let rawTitle = v.title.replace(/&#?\w+;/g, m => { const el = document.createElement('span'); el.innerHTML=m; return el.textContent; });
-      // 提取【】内的技法标注（找最后一个【】）
-      const matches = [...rawTitle.matchAll(/【([^】]+)】/g)];
-      let techFromTitle = null;
-      const TECH_KEYWORDS = ['实验', '动画', '2D', '3D', 'CG', '手绘', '定格', 'CGI', '水彩', '水墨', '沙画', '剪纸', 'ストップモーション'];
-      for (let i = matches.length - 1; i >= 0; i--) {
-        if (TECH_KEYWORDS.some(k => matches[i][1].includes(k))) { techFromTitle = matches[i]; break; }
+      // 分类【】内容：奖→award / 学校→group / 技法→technique
+      const bracketItems = [...rawTitle.matchAll(/【([^】]+)】/g)].map(m => m[1]);
+      let awardFromBracket = '', schoolFromBracket = '', techFromBracket = '';
+      for (const item of bracketItems) {
+        if (/[届奖赛展计划大赏]/.test(item)) awardFromBracket = item;
+        else if (/[大学学院学校]/.test(item)) schoolFromBracket = item;
+        else if (/[实验动画2D3DCG手绘定格CGI水彩水墨沙画剪纸ストップモーション]/.test(item)) techFromBracket = item;
       }
-      // 去掉所有【】及内容，得到干净标题
-      let cleanTitle = rawTitle.replace(/【[^】]+】/g, '').replace(/^\s+|\s+$/g, '');
-      // 如果清洗后为空或太短，用原始标题
-      if (!cleanTitle || cleanTitle.length < 3) cleanTitle = rawTitle;
+      // 去掉所有【】和《》，得到干净标题
+      let cleanTitle = rawTitle
+        .replace(/【[^】]+】/g, '')
+        .replace(/《[^》]+》/g, m => m.slice(1, -1)) // 《老涵你什么时候到！》→ 老涵你什么时候到！
+        .replace(/^\s+|\s+$/g, '');
+      // 去掉尾部" - 人名"模式（导演署名）
+      const dirSuffixMatch = cleanTitle.match(/^(.*?)\s*[—–-]\s*([^—–-]{2,8})$/);
+      let dirFromTitleSuffix = '';
+      if (dirSuffixMatch) {
+        cleanTitle = dirSuffixMatch[1].trim();
+        dirFromTitleSuffix = dirSuffixMatch[2].trim();
+      }
+      if (!cleanTitle || cleanTitle.length < 2) cleanTitle = rawTitle;
       const title = cleanTitle;
 
       const m = Math.floor(v.duration/60), s = v.duration%60;
@@ -1739,33 +1749,46 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
       const owner = v.owner?.name || '';
       const desc = v.desc || '';
 
-      // 2. 年份：优先从描述中提取（影片真实年份），pubdate 作降级
+      // 2. 年份：标题 > 描述 > pubdate
       let year = new Date(v.pubdate * 1000).getFullYear();
-      const yearInDesc = desc.match(/(?:作品|制作|毕业|上映|年度|年次作品)\s*(\d{4})/) || desc.match(/(\d{4})[年]/);
-      if (yearInDesc) {
-        const dy = parseInt(yearInDesc[1]);
-        if (dy >= 2000 && dy <= 2030) year = dy;
-      }
-      // 如果标题含有年份标注如 (2023) 也优先
-      const yearInTitle = rawTitle.match(/\((\d{4})\)/);
+      // 标题中任意位置的 4 位数年份（含括号和不带括号）
+      const yearInTitle = rawTitle.match(/[（(]?(\d{4})[年)）]?/);
       if (yearInTitle) {
         const ty = parseInt(yearInTitle[1]);
-        if (ty >= 2000 && ty <= 2030) year = ty;
+        if (ty >= 1900 && ty <= 2030) year = ty;
+      }
+      // 描述中的年份关键词
+      const yearInDesc = desc.match(/(?:作品|制作|毕业|上映|年度|年次作品|©)\s*(\d{4})/) || desc.match(/(\d{4})[年]/);
+      if (yearInDesc) {
+        const dy = parseInt(yearInDesc[1]);
+        if (dy >= 1900 && dy <= 2030 && dy !== new Date(v.pubdate * 1000).getFullYear()) year = dy;
       }
 
-      // 3. 导演：优先从描述提取（監督：/导演：/Directed by）
+      // 3. 导演：描述提取 → 标题后缀 → 标题括号 → UP主
       let director = '';
+      // 3a. 描述中"監督：/导演：/Directed by"
       const dirMatch = desc.match(/[監督导演][：:]\s*([^\n，,。、]+)/) || desc.match(/[Dd]irected by\s+([^\n。.]+)/);
       if (dirMatch) {
         director = dirMatch[1].trim();
-      } else {
-        // 从标题提取导演名（常见于括号内）
-        const dirInTitle = rawTitle.match(/\(([^)]+)\)/);
-        if (dirInTitle && dirInTitle[1].length < 12) director = dirInTitle[1];
       }
-      // 补充学校信息到导演字段
-      const schoolInTitle = rawTitle.match(/【([^】]*(?:大学|学院|学校|CalArts|Gobelins)[^】]*)】/);
-      const schoolSuffix = schoolInTitle ? ` / ${schoolInTitle[1]}` : '';
+      // 3b. 描述中"xxx 导演名，" 模式（如"土豆搬运 山村浩二，"）
+      if (!director) {
+        const knownDirs = ['山村浩二', '新海誠', '宮崎駿', '高畑勲', '今敏', '細田守', '湯浅政明'];
+        for (const name of knownDirs) {
+          if (desc.includes(name)) { director = name; break; }
+        }
+      }
+      // 3c. 标题后缀" - 导演名"
+      if (!director && dirFromTitleSuffix) {
+        director = dirFromTitleSuffix;
+      }
+      // 3d. 标题括号内的人名
+      if (!director) {
+        const dirInParen = rawTitle.match(/\(([^)]{2,8})\)/);
+        if (dirInParen) director = dirInParen[1];
+      }
+      // 学校后缀（从【】提取）
+      const schoolSuffix = schoolFromBracket ? ` / ${schoolFromBracket}` : '';
       if (director) {
         document.getElementById('addDirector').value = director + schoolSuffix;
       } else if (owner) {
@@ -1777,26 +1800,38 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
       document.getElementById('addDuration').value = dur;
       document.getElementById('addDesc').value = desc;
 
-      // 4. 学校→分类映射
+      // 4. 学校→分类映射（扩展版）
       const SCHOOL_MAP = [
-        { keys: ['东京艺术大学', '東京藝術大学', '东艺大', '東京藝大', 'GEIDAI'], group: 'geidai' },
-        { keys: ['多摩美术大学', '多摩美術大学', '多摩美术'], group: 'tama' },
-        { keys: ['京都精华大学', '京都精華大学', '京都精华'], group: 'seika' },
-        { keys: ['东京造形大学', '東京造形大学', '东造形大', 'zokei'], group: 'zokei' },
-        { keys: ['Gobelins', 'GOBELINS'], group: 'gobelins' },
-        { keys: ['CalArts', 'calarts'], group: 'calarts' },
+        { keys: ['东京艺术大学', '東京藝術大学', '东艺大', '東京藝大', 'GEIDAI'], group: 'geidai', label: '东京艺大' },
+        { keys: ['多摩美术大学', '多摩美術大学', '多摩美术'], group: 'tama', label: '多摩美术' },
+        { keys: ['京都精华大学', '京都精華大学', '京都精华'], group: 'seika', label: '京都精华' },
+        { keys: ['东京造形大学', '東京造形大学', '东造形大', 'zokei'], group: 'zokei', label: '东造形大' },
+        { keys: ['Gobelins', 'GOBELINS'], group: 'gobelins', label: 'Gobelins' },
+        { keys: ['CalArts', 'calarts'], group: 'calarts', label: 'CalArts' },
+        { keys: ['中国传媒大学', '中传'], group: 'other', label: '中传' },
+        { keys: ['北京电影学院', '北电'], group: 'other', label: '北电' },
+        { keys: ['清华大学美术学院', '清华美院', '清华'], group: 'other', label: '清华' },
+        { keys: ['Ringling'], group: 'other', label: 'Ringling' },
+        { keys: ['SVA', 'School of Visual Arts'], group: 'other', label: 'SVA' },
+        { keys: ['RCA', 'Royal College of Art'], group: 'other', label: 'RCA' },
       ];
       const allText = rawTitle + ' ' + desc;
-      let detectedGroup = '';
+      let detectedGroup = '', detectedLabel = '';
       for (const s of SCHOOL_MAP) {
-        if (s.keys.some(k => allText.includes(k))) { detectedGroup = s.group; break; }
+        if (s.keys.some(k => allText.includes(k))) { detectedGroup = s.group; detectedLabel = s.label; break; }
       }
       const gSel = document.getElementById('addGroup');
+      // 如果没识别到学校，但描述含奖项关键词 → 建议影展获奖
+      if (!detectedGroup) {
+        if (/[奖奥斯卡提名入围电影节]/.test(desc)) {
+          detectedGroup = 'festival';
+          detectedLabel = '影展获奖';
+        }
+      }
       if (detectedGroup) gSel.value = detectedGroup;
 
       // 5. 技法
-      let technique = '';
-      if (techFromTitle) technique = techFromTitle[1];
+      let technique = techFromBracket || '';
       if (!technique) {
         const techHint = desc.match(/(2D|3D|定格|手绘|CGI|实验|水彩|水墨|沙画|剪纸|CG|ストップモーション|立体|人形)/);
         if (techHint) {
@@ -1806,7 +1841,7 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
       }
       if (technique) document.getElementById('addTechnique').value = technique;
 
-      // 6. 国家：从学校/机构推断
+      // 6. 国家：学校→国家 / 描述关键词
       const COUNTRY_MAP = {
         geidai:'日本', tama:'日本', seika:'日本', zokei:'日本',
         gobelins:'法国', calarts:'美国',
@@ -1814,22 +1849,23 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
       if (detectedGroup && COUNTRY_MAP[detectedGroup]) {
         document.getElementById('addCountry').value = COUNTRY_MAP[detectedGroup];
       } else {
-        const countryHint = desc.match(/来自\s*([^\n，,。\s]{2,6}?国)/) || desc.match(/(日本|中国|美国|法国|英国|韩国|伊朗|加拿大|俄罗斯|智利|台湾)/);
-        if (countryHint) {
+        const cHint = desc.match(/来自\s*([^\n，,。\s]{2,6}?国)/) || desc.match(/(日本|中国|美国|法国|英国|韩国|伊朗|加拿大|俄罗斯|智利|台湾)/);
+        if (cHint) {
           const known = {日本:'日本',中国:'中国',美国:'美国',法国:'法国',英国:'英国',韩国:'韩国',伊朗:'伊朗',加拿大:'加拿大',俄罗斯:'俄罗斯',智利:'智利',台湾:'中国'};
-          document.getElementById('addCountry').value = known[countryHint[1]] || countryHint[1];
+          document.getElementById('addCountry').value = known[cHint[1]] || cHint[1];
         }
       }
 
-      // 7. 标签
+      // 7. 标签 + 奖项建议
       const tags = [String(year)];
-      if (detectedGroup) {
-        const g = GROUPS.find(gr => gr.key === detectedGroup);
-        if (g) tags.push(g.label.replace(/[🎬🏆🇨🇳]\s*/g,'').trim());
-      }
+      if (detectedLabel) tags.push(detectedLabel);
       tags.push('B站');
       if (technique) tags.push(technique);
       document.getElementById('addTags').value = tags.join(', ');
+      // 奖项：从【】提取的奖项内容
+      if (awardFromBracket) {
+        document.getElementById('addAward').value = `🏆 ${awardFromBracket}`;
+      }
 
       st.textContent='✅ B站 数据已自动填充，请核对并补充';
       st.className='fetch-status ok';
