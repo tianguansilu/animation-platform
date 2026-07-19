@@ -1712,13 +1712,23 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
   try {
     if (p.type==='bilibili') {
       let v = null;
-      // 优先走本地代理 → 其次走公共 CORS 代理
+      // CORS 代理列表（依次尝试）
       const proxyUrls = [
-        `/api/bilibili?bvid=${p.id}`,
+        // 方法1: 直接请求B站API（部分环境CORS可能放行）
+        `https://api.bilibili.com/x/web-interface/view?bvid=${p.id}`,
+        // 方法2: 公共CORS代理
         `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.bilibili.com/x/web-interface/view?bvid='+p.id)}`,
+        `https://corsproxy.io/?url=${encodeURIComponent('https://api.bilibili.com/x/web-interface/view?bvid='+p.id)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://api.bilibili.com/x/web-interface/view?bvid='+p.id)}`,
       ];
       for (const url of proxyUrls) {
-        try { const r = await fetch(url); if (!r.ok) continue; const d = await r.json(); if (d.code === 0 && d.data) { v = d.data; break; } } catch(_) { continue; }
+        try {
+          const init = url.includes('api.bilibili.com') ? { headers: { 'Referer': 'https://www.bilibili.com/', 'User-Agent': 'Mozilla/5.0' } } : {};
+          const r = await fetch(url, init);
+          if (!r.ok) continue;
+          const d = await r.json();
+          if (d.code === 0 && d.data) { v = d.data; break; }
+        } catch(_) { continue; }
       }
       if (!v) throw new Error('所有代理均不可用，请手动填写');
 
@@ -1919,7 +1929,7 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
     document.getElementById('addDirector').focus();
   } catch(e) {
     st.textContent = p.type==='bilibili'
-      ? `❌ API 请求失败。请在桌面目录启动本地服务器：在终端运行 cd /c/Users/evawi/Desktop && python -m http.server 8000，然后访问 http://localhost:8000/动画精选平台.html`
+      ? `❌ 抓取失败，所有代理均不可用。可尝试：①刷新页面重试 ②开VPN ③在桌面运行 python -m http.server 8000 后访问本地版`
       : `❌ 抓取失败：${e.message}`;
     st.className='fetch-status err';
   } finally {
