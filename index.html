@@ -1439,7 +1439,14 @@ function getAddedWorks() {
   try { return JSON.parse(localStorage.getItem(ADD_WORKS_KEY)) || []; }
   catch { return []; }
 }
-function getAllWorks() { return [...WORKS, ...getAddedWorks()]; }
+function getAllWorks() {
+  const builtin = WORKS;
+  const added = getAddedWorks();
+  // 去重：如果 added 中的 bvid/vid 已存在于 builtin，跳过
+  const builtinIds = new Set(builtin.map(w => w.bvid || w.vid).filter(Boolean));
+  const filtered = added.filter(w => !builtinIds.has(w.bvid || w.vid));
+  return [...builtin, ...filtered];
+}
 
 function groupCount(key) {
   const all = getAllWorks();
