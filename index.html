@@ -1962,13 +1962,14 @@ document.getElementById('addSubmitBtn').addEventListener('click', () => {
   added.push(work);
   localStorage.setItem(ADD_WORKS_KEY, JSON.stringify(added));
   render(); renderAddedList(); updateExportCode();
-  // 重置表单，准备添加下一部
-  ['addTitle','addDirector','addYear','addAward','addTechnique','addCountry','addDuration','addDesc','addTags'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('addPreview').style.display='none';
-  document.getElementById('fetchStatus').textContent='✅ 已添加！继续下一部，或关闭';
-  document.getElementById('fetchStatus').className='fetch-status ok';
-  document.getElementById('addUrl').value=''; document.getElementById('addUrl').focus();
-  if(h) h.value=''; _lastUrl=null;
+  // 自动关闭弹窗，让用户看到新卡片
+  closeAddModal();
+  // 显示简短提示
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(46,196,182,0.9);color:#fff;padding:10px 24px;border-radius:50px;font-size:0.85rem;z-index:9999;transition:opacity 0.5s;box-shadow:0 4px 20px rgba(0,0,0,0.4)';
+  toast.textContent = `✅ 已添加「${title}」`;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 2500);
 });
 
 // 已添加作品管理 & 导出
