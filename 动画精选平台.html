@@ -468,7 +468,11 @@
       <button class="btn btn-primary" id="addSubmitBtn">✔ 添加作品</button>
     </div>
     <div class="export-bar" id="exportBar" style="display:none">
-      <button class="btn btn-small btn-secondary" id="exportBtn">📋 复制 JS 代码到剪贴板（永久保存到 HTML）</button>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn btn-small btn-secondary" id="exportBtn">📋 复制 JS 代码</button>
+        <button class="btn btn-small btn-primary" id="deployBtn">🚀 发布到线上</button>
+      </div>
+      <div id="deployStatus" style="font-size:0.78rem;color:var(--text-muted);min-height:1.2em;text-align:center"></div>
       <textarea id="exportCode" readonly placeholder="新增作品的 JS 代码会出现在这里…"></textarea>
     </div>
   </div>
@@ -1992,8 +1996,110 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   code.select();
   navigator.clipboard.writeText(code.value).then(() => {
     document.getElementById('exportBtn').textContent = '✅ 已复制！';
-    setTimeout(() => document.getElementById('exportBtn').textContent = '📋 复制 JS 代码到剪贴板（永久保存到 HTML）', 2000);
-  }).catch(() => { document.execCommand('copy'); alert('已复制到剪贴板，请粘贴到 HTML 的 WORKS 数组中'); });
+    setTimeout(() => document.getElementById('exportBtn').textContent = '📋 复制 JS 代码', 2000);
+  }).catch(() => { document.execCommand('copy'); alert('已复制到剪贴板'); });
+});
+
+// ===== 🚀 一键发布到线上 =====
+const GH_TOKEN_KEY = 'hermes_gh_token';
+const GH_REPO = 'tianguansilu/animation-platform';
+const GH_BRANCH = 'main';
+const GH_PATH = '动画精选平台.html';
+
+function getGhToken() {
+  let t = localStorage.getItem(GH_TOKEN_KEY);
+  if (!t) {
+    t = prompt('请输入 GitHub Token（第一次使用需要设置）：\nhttps://github.com/settings/tokens\n需要 repo 权限');
+    if (t) localStorage.setItem(GH_TOKEN_KEY, t);
+  }
+  return t;
+}
+
+document.getElementById('deployBtn').addEventListener('click', async () => {
+  const st = document.getElementById('deployStatus');
+  const added = getAddedWorks();
+  if (!added.length) { st.textContent = '⚠️ 没有待发布的作品'; return; }
+
+  const token = getGhToken();
+  if (!token) { st.textContent = '❌ 需要 GitHub Token 才能发布'; return; }
+
+  st.textContent = '⏳ 正在获取线上文件…';
+  document.getElementById('deployBtn').disabled = true;
+
+  try {
+    // 1. 获取当前线上文件
+    const url = `https://api.github.com/repos/${GH_REPO}/contents/${encodeURIComponent(GH_PATH)}?ref=${GH_BRANCH}`;
+    const getR = await fetch(url, {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!getR.ok) throw new Error(`获取文件失败 (${getR.status})`);
+    const data = await getR.json();
+    const sha = data.sha;
+    const currentContent = atob(data.content);
+
+    // 2. 在 WORKS 数组末尾、闭合前插入新增作品
+    const insertMark = '// 📥 用户新增（';
+    const closeMark = '];\n\n// ===== 分类定义';
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+    // 生成新增作品的 JS 代码
+    const esc = s => (s||'').replace(/'/g,"\\'");
+    const newCode = added.map(w => {
+      let r = `  {\n    id: '${w.id}',\n    title: '${esc(w.title)}',\n    titleEn: '${esc(w.titleEn)}',\n    director: '${esc(w.director)}',\n    year: ${w.year}, group: '${w.group}',\n`;
+      ['award','technique','country','duration'].forEach(k => { if(w[k]) r += `    ${k}: '${esc(w[k])}',\n`; });
+      if(w.description) r += `    description: '${esc(w.description)}',\n`;
+      if(w.bvid) { r += `    bvid: '${w.bvid}',\n`; if(w.bcover) r += `    bcover: '${w.bcover}',\n`; }
+      if(w.vid) r += `    vid: '${w.vid}',\n`;
+      r += `    tags: [${(w.tags||[]).map(t=>`'${esc(t)}'`).join(', ')}]\n  },`;
+      return r;
+    }).join('\n\n');
+
+    // 3. 替换或插入
+    let newContent;
+    const insertLine = `// 📥 用户新增（${dateStr}）`;
+    if (currentContent.includes(insertMark)) {
+      // 已有用户新增区块，追加到最后一个 } 之前
+      const lastBrace = currentContent.lastIndexOf('  },\n');
+      if (lastBrace > 0) {
+        newContent = currentContent.slice(0, lastBrace + 2) + '\n' + newCode + '\n' + currentContent.slice(lastBrace + 2);
+      } else {
+        throw new Error('无法定位插入位置');
+      }
+    } else {
+      // 没有用户新增区块，在闭合前插入
+      newContent = currentContent.replace(closeMark, `  // 📥 用户新增（${dateStr}）\n${newCode}\n${closeMark}`);
+    }
+
+    st.textContent = '⏳ 正在提交到 GitHub…';
+
+    // 4. Push to GitHub
+    const putR = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${encodeURIComponent(GH_PATH)}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `➕ 新增作品：${added.map(w=>w.title).join('、')}`,
+        content: btoa(unescape(encodeURIComponent(newContent))),
+        sha: sha,
+        branch: GH_BRANCH
+      })
+    });
+    if (!putR.ok) {
+      const err = await putR.json();
+      throw new Error(`提交失败 (${putR.status}): ${err.message}`);
+    }
+
+    st.innerHTML = '✅ 发布成功！等待 GitHub Pages 部署（约1-2分钟）…<br><a href="https://tianguansilu.github.io/animation-platform/" target="_blank" style="color:var(--accent-gold)">打开线上页面</a>';
+
+    // 清除已发布的 localStorage 作品
+    localStorage.removeItem(ADD_WORKS_KEY);
+    render(); renderAddedList(); updateExportCode();
+
+  } catch(e) {
+    st.textContent = `❌ ${e.message}`;
+  } finally {
+    document.getElementById('deployBtn').disabled = false;
+  }
 });
 
 // 搜索输入 + 一键清除
