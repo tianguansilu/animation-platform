@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>动画精选 — 全球优秀动画作品平台</title>
+<title>一芥 — 优秀动画分享平台</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -44,11 +44,15 @@
   @keyframes heroGlow { 0% { transform: translate(0,0) rotate(0deg); } 100% { transform: translate(2%,2%) rotate(2deg); } }
   .hero-content { position: relative; z-index: 1; max-width: 800px; }
   .hero-badge {
-    display: inline-block; background: rgba(240,179,75,0.12);
-    border: 1px solid rgba(240,179,75,0.25); color: var(--accent-gold);
-    padding: 6px 18px; border-radius: 50px; font-size: 0.8rem;
-    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px;
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 34px; padding: 0 20px;
+    background: #1B1B25; border: 1px solid #84744B;
+    border-radius: 999px; margin-bottom: 20px;
+    color: #C9AB6E; font-size: 0.82rem;
+    font-family: "Songti SC", "Noto Serif SC", "STSong", serif;
+    letter-spacing: 0.08em; box-shadow: 0 0 10px rgba(132,116,75,0.2);
   }
+  .hero-badge .star { color: #CBA75C; font-size: 0.75rem; }
   .hero h1 {
     font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 800; letter-spacing: -0.03em;
     line-height: 1.15; margin-bottom: 16px;
@@ -199,6 +203,29 @@
   .card-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 8px; }
   .card-meta span { display: inline-flex; align-items: center; gap: 4px; }
   .card-desc { font-size: 0.82rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+  .fav-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 6;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    border: none; color: var(--text-muted); font-size: 1rem;
+    cursor: pointer; transition: var(--transition);
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1; padding: 0; font-family: inherit;
+  }
+  .fav-btn:hover { transform: scale(1.15); background: rgba(0,0,0,0.7); }
+  .fav-btn.active { color: #ff4d6a; }
+  .fav-btn.active:hover { color: #ff6b85; }
+  .modal-fav-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,77,106,0.1); border: 1px solid rgba(255,77,106,0.3);
+    border-radius: 8px; padding: 8px 16px; font-size: 0.85rem;
+    color: #ff4d6a; cursor: pointer; transition: var(--transition);
+    font-family: inherit;
+  }
+  .modal-fav-btn:hover { background: rgba(255,77,106,0.2); }
+  .modal-fav-btn.active { background: #ff4d6a; color: #fff; border-color: #ff4d6a; }
+  .fav-chip { margin-left: 8px; }
+  .fav-chip.active { background: rgba(255,77,106,0.15) !important; border-color: #ff4d6a !important; color: #ff4d6a !important; }
   .modal-overlay {
     position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.75);
     backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;
@@ -296,9 +323,9 @@
 
 <header class="hero">
   <div class="hero-content">
-    <div class="hero-badge">✦ Animation Curation</div>
-    <h1>全球优秀动画精选</h1>
-    <p>汇集世界顶尖高校毕业动画作品、国际影展获奖佳作<br>全部视频链接经实际验证</p>
+    <div class="hero-badge"><span class="star">✦</span> 一芥 · 芥子纳须弥</div>
+    <h1>一芥</h1>
+    <p>优秀动画分享平台<br><span style="font-size:0.85em;color:var(--text-muted)">万象落于一芥，刹那即是永恒</span></p>
     <div class="hero-stats">
       <div class="hero-stat">
         <div class="hero-stat-num" id="totalWorks">0</div>
@@ -319,6 +346,7 @@
 <nav class="filter-bar" id="filterBar">
   <span class="filter-label">来源</span>
   <div class="filter-chip-group" id="festivalFilters"></div>
+  <button class="filter-chip fav-chip" id="favFilter">❤️ 收藏<span class="chip-count" id="favCount">0</span></button>
   <span class="filter-label" style="margin-left:8px;">年度</span>
   <div class="filter-chip-group" id="yearFilters"></div>
   <div class="filter-spacer"></div>
@@ -352,7 +380,7 @@
 </div>
 
 <footer class="footer">
-  <p>动画精选 · 全球优秀动画作品平台 · 全部链接经人工逐条验证可播放</p>
+  <p>一芥 · 优秀动画分享平台 · 全部链接经人工逐条验证可播放</p>
   <p style="margin-top:4px; font-size:0.75rem;"><span id="footerCount">0</span> 部作品</p>
 </footer>
 
@@ -379,14 +407,11 @@
 
     <!-- 基本信息 -->
     <div class="form-row">
-      <div class="form-group">
-        <label for="addTitle">中文标题 *</label>
-        <input type="text" id="addTitle" placeholder="中文标题">
+      <div class="form-group" style="flex:1">
+        <label for="addTitle">标题 *</label>
+        <input type="text" id="addTitle" placeholder="作品标题（中日英皆可）">
       </div>
-      <div class="form-group">
-        <label for="addTitleEn">英文标题</label>
-        <input type="text" id="addTitleEn" placeholder="English Title">
-      </div>
+      <input type="hidden" id="addTitleEn">
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -1358,8 +1383,25 @@ const WORKS = [
       description: '1917年哈利法克斯大爆炸——两艘船在港口相撞，一名路过的水手被气浪抛向空中。在他飞行的瞬间，一生在眼前闪过。加拿大国家电影局(NFB)出品，第95届奥斯卡最佳动画短片提名。The New Yorker官方放映厅频道收录。',
       vid: '4Rj3FG8vFtk',
       tags: ['2022', '奥斯卡', '提名', 'NFB', '加拿大']
-    }
-    ];
+    },
+  // ==========================================================
+  // 📥 用户新增（2026-07-19）
+  // ==========================================================
+  {
+    id: 'added-b71',
+    title: 'RINGING CITY (今津 良樹)',
+    titleEn: 'RINGING CITY (今津 良樹)',
+    director: '今津 良樹 / 东京艺术大学',
+    year: 2017, group: 'geidai',
+    technique: '实验动画',
+    country: '日本',
+    duration: '3:59',
+    description: '東京藝術大学大学院映像研究科アニメーション専攻一年次作品。監督：今津 良樹、プロデューサー：山村浩二。情報過多な大都会。無関心に潜む、自覚のない好奇心が喧騒のループへと誘い込む。',
+    bvid: 'BV1PY4y1V7YR',
+    bcover: 'https://i2.hdslb.com/bfs/archive/9e133d8e7c5dd40e42844457c639437aabe6b46a.jpg',
+    tags: ['2017', '东京艺大', 'B站', '实验动画']
+  },
+  ];
 
 // ==========================================================
 // 分类定义（顺序即筛选栏显示顺序）
@@ -1380,6 +1422,19 @@ const GROUPS = [
 
 const isChina = w => /中国|台湾/.test(w.country || '');
 const ADD_WORKS_KEY = 'hermes_anim_added';
+const FAVS_KEY = 'hermes_anim_favs';
+function getFavs() {
+  try { return JSON.parse(localStorage.getItem(FAVS_KEY)) || []; }
+  catch { return []; }
+}
+function isFav(id) { return getFavs().includes(id); }
+function toggleFav(id) {
+  let favs = getFavs(); const idx = favs.indexOf(id);
+  if (idx > -1) favs.splice(idx, 1); else favs.push(id);
+  localStorage.setItem(FAVS_KEY, JSON.stringify(favs));
+  return favs.includes(id);
+}
+function favCount() { return getAllWorks().filter(w => isFav(w.id)).length; }
 function getAddedWorks() {
   try { return JSON.parse(localStorage.getItem(ADD_WORKS_KEY)) || []; }
   catch { return []; }
@@ -1395,6 +1450,7 @@ function groupCount(key) {
 
 let currentFestival = 'all';
 let currentYear = 'all';
+let currentFav = false;
 let searchQuery = '';
 
 function getWorks() {
@@ -1415,6 +1471,9 @@ function getWorks() {
       (w.country || '').toLowerCase().includes(q) || (w.technique || '').toLowerCase().includes(q) ||
       w.tags.some(t => t.toLowerCase().includes(q))
     );
+  }
+  if (currentFav) {
+    list = list.filter(w => isFav(w.id));
   }
   list.sort((a, b) => b.year - a.year || a.title.localeCompare(b.title));
   return list;
@@ -1487,8 +1546,8 @@ function render() {
         ? `<img src="https://img.youtube.com/vi/${w.vid}/hqdefault.jpg" alt="${w.title}" loading="lazy" onerror="this.style.display='none'">`
         : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2a1a2a,#1a1a3a);color:var(--accent-rose)">📕 小红书</div>`);
 
-    return `<div class="card" onclick="openModal('${w.id}')">
-      <div class="card-thumb">${img}<div class="card-badges">${getBadges(w)}</div></div>
+    return `<div class="card" data-id="${w.id}" onclick="openModal('${w.id}')">
+      <div class="card-thumb">${img}<div class="card-badges">${getBadges(w)}</div><button class="fav-btn${isFav(w.id)?' active':''}" data-favid="${w.id}" onclick="event.stopPropagation();_toggleFav('${w.id}')">${isFav(w.id)?'❤️':'♡'}</button></div>
       <div class="card-body">
         <div class="card-title">${w.title}</div>
         <div class="card-title-en">${w.titleEn}</div>
@@ -1504,6 +1563,7 @@ function render() {
   const years = getAllWorks().map(w => w.year);
   document.getElementById('totalYears').textContent = Math.max(...years) - Math.min(...years) + 1;
   document.getElementById('footerCount').textContent = getAllWorks().length;
+  document.getElementById('favCount').textContent = favCount();
 }
 
 function openModal(id) {
@@ -1568,6 +1628,25 @@ function openModal(id) {
     btn.textContent = '📕 小红书 观看';
     acts.appendChild(btn);
   }
+  // 收藏按钮
+  const favBtn = document.createElement('button');
+  const isFaved = isFav(work.id);
+  favBtn.className = `modal-fav-btn${isFaved ? ' active' : ''}`;
+  favBtn.innerHTML = isFaved ? '❤️ 已收藏' : '♡ 收藏';
+  favBtn.onclick = () => {
+    const now = toggleFav(work.id);
+    favBtn.classList.toggle('active', now);
+    favBtn.innerHTML = now ? '❤️ 已收藏' : '♡ 收藏';
+    document.getElementById('favCount').textContent = favCount();
+    // Update card button if visible
+    const cardBtn = document.querySelector(`.fav-btn[data-favid="${work.id}"]`);
+    if (cardBtn) {
+      cardBtn.classList.toggle('active', now);
+      cardBtn.textContent = now ? '❤️' : '♡';
+    }
+    if (currentFav && !now) { closeModal(); render(); }
+  };
+  acts.appendChild(favBtn);
   const cb = document.createElement('button');
   cb.className = 'btn btn-secondary'; cb.textContent = '关闭';
   cb.onclick = closeModal; acts.appendChild(cb);
@@ -1620,50 +1699,176 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
   st.textContent='正在抓取…'; st.className='fetch-status';
   document.getElementById('fetchBtn').disabled = true;
   try {
-    let info;
     if (p.type==='bilibili') {
-      // 依次尝试：本地代理 → 公共 CORS 代理 → 提示手动填写
       let v = null;
+      // 优先走本地代理 → 其次走公共 CORS 代理
       const proxyUrls = [
         `/api/bilibili?bvid=${p.id}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.bilibili.com/x/web-interface/view?bvid='+p.id)}`,
       ];
       for (const url of proxyUrls) {
-        try {
-          const r = await fetch(url);
-          if (!r.ok) continue;
-          const d = await r.json();
-          if (d.code === 0 && d.data) { v = d.data; break; }
-        } catch(_) { continue; }
+        try { const r = await fetch(url); if (!r.ok) continue; const d = await r.json(); if (d.code === 0 && d.data) { v = d.data; break; } } catch(_) { continue; }
       }
       if (!v) throw new Error('所有代理均不可用，请手动填写');
+
+      // ---- B站数据填充（智能解析版） ----
+      // 1. 标题清洗：去掉【】前缀/后缀
+      let rawTitle = v.title.replace(/&#?\w+;/g, m => { const el = document.createElement('span'); el.innerHTML=m; return el.textContent; });
+      // 提取【】内的技法标注（找最后一个【】）
+      const matches = [...rawTitle.matchAll(/【([^】]+)】/g)];
+      let techFromTitle = null;
+      const TECH_KEYWORDS = ['实验', '动画', '2D', '3D', 'CG', '手绘', '定格', 'CGI', '水彩', '水墨', '沙画', '剪纸', 'ストップモーション'];
+      for (let i = matches.length - 1; i >= 0; i--) {
+        if (TECH_KEYWORDS.some(k => matches[i][1].includes(k))) { techFromTitle = matches[i]; break; }
+      }
+      // 去掉所有【】及内容，得到干净标题
+      let cleanTitle = rawTitle.replace(/【[^】]+】/g, '').replace(/^\s+|\s+$/g, '');
+      // 如果清洗后为空或太短，用原始标题
+      if (!cleanTitle || cleanTitle.length < 3) cleanTitle = rawTitle;
+      const title = cleanTitle;
+
       const m = Math.floor(v.duration/60), s = v.duration%60;
-      info = {title:v.title, cover:v.pic, desc:v.desc, dur:`${m}:${String(s).padStart(2,'0')}`};
-      document.getElementById('addTitle').value = info.title;
+      const dur = `${m}:${String(s).padStart(2,'0')}`;
+      const owner = v.owner?.name || '';
+      const desc = v.desc || '';
+
+      // 2. 年份：优先从描述中提取（影片真实年份），pubdate 作降级
+      let year = new Date(v.pubdate * 1000).getFullYear();
+      const yearInDesc = desc.match(/(?:作品|制作|毕业|上映|年度|年次作品)\s*(\d{4})/) || desc.match(/(\d{4})[年]/);
+      if (yearInDesc) {
+        const dy = parseInt(yearInDesc[1]);
+        if (dy >= 2000 && dy <= 2030) year = dy;
+      }
+      // 如果标题含有年份标注如 (2023) 也优先
+      const yearInTitle = rawTitle.match(/\((\d{4})\)/);
+      if (yearInTitle) {
+        const ty = parseInt(yearInTitle[1]);
+        if (ty >= 2000 && ty <= 2030) year = ty;
+      }
+
+      // 3. 导演：优先从描述提取（監督：/导演：/Directed by）
+      let director = '';
+      const dirMatch = desc.match(/[監督导演][：:]\s*([^\n，,。、]+)/) || desc.match(/[Dd]irected by\s+([^\n。.]+)/);
+      if (dirMatch) {
+        director = dirMatch[1].trim();
+      } else {
+        // 从标题提取导演名（常见于括号内）
+        const dirInTitle = rawTitle.match(/\(([^)]+)\)/);
+        if (dirInTitle && dirInTitle[1].length < 12) director = dirInTitle[1];
+      }
+      // 补充学校信息到导演字段
+      const schoolInTitle = rawTitle.match(/【([^】]*(?:大学|学院|学校|CalArts|Gobelins)[^】]*)】/);
+      const schoolSuffix = schoolInTitle ? ` / ${schoolInTitle[1]}` : '';
+      if (director) {
+        document.getElementById('addDirector').value = director + schoolSuffix;
+      } else if (owner) {
+        document.getElementById('addDirector').value = `${owner}（B站UP主）`;
+      }
+
+      document.getElementById('addTitle').value = title;
+      document.getElementById('addYear').value = year;
+      document.getElementById('addDuration').value = dur;
+      document.getElementById('addDesc').value = desc;
+
+      // 4. 学校→分类映射
+      const SCHOOL_MAP = [
+        { keys: ['东京艺术大学', '東京藝術大学', '东艺大', '東京藝大', 'GEIDAI'], group: 'geidai' },
+        { keys: ['多摩美术大学', '多摩美術大学', '多摩美术'], group: 'tama' },
+        { keys: ['京都精华大学', '京都精華大学', '京都精华'], group: 'seika' },
+        { keys: ['东京造形大学', '東京造形大学', '东造形大', 'zokei'], group: 'zokei' },
+        { keys: ['Gobelins', 'GOBELINS'], group: 'gobelins' },
+        { keys: ['CalArts', 'calarts'], group: 'calarts' },
+      ];
+      const allText = rawTitle + ' ' + desc;
+      let detectedGroup = '';
+      for (const s of SCHOOL_MAP) {
+        if (s.keys.some(k => allText.includes(k))) { detectedGroup = s.group; break; }
+      }
+      const gSel = document.getElementById('addGroup');
+      if (detectedGroup) gSel.value = detectedGroup;
+
+      // 5. 技法
+      let technique = '';
+      if (techFromTitle) technique = techFromTitle[1];
+      if (!technique) {
+        const techHint = desc.match(/(2D|3D|定格|手绘|CGI|实验|水彩|水墨|沙画|剪纸|CG|ストップモーション|立体|人形)/);
+        if (techHint) {
+          const tmap = {2:'2D 手绘','3D':'3D CGI',定格:'定格动画',手绘:'2D 手绘',CGI:'3D CGI',实验:'实验动画',水彩:'水彩动画',水墨:'水墨动画',沙画:'沙画动画',剪纸:'剪纸动画',CG:'3D CGI',ストップモーション:'定格动画',立体:'3D CGI',人形:'人形动画'};
+          technique = tmap[techHint[1]] || techHint[1];
+        }
+      }
+      if (technique) document.getElementById('addTechnique').value = technique;
+
+      // 6. 国家：从学校/机构推断
+      const COUNTRY_MAP = {
+        geidai:'日本', tama:'日本', seika:'日本', zokei:'日本',
+        gobelins:'法国', calarts:'美国',
+      };
+      if (detectedGroup && COUNTRY_MAP[detectedGroup]) {
+        document.getElementById('addCountry').value = COUNTRY_MAP[detectedGroup];
+      } else {
+        const countryHint = desc.match(/来自\s*([^\n，,。\s]{2,6}?国)/) || desc.match(/(日本|中国|美国|法国|英国|韩国|伊朗|加拿大|俄罗斯|智利|台湾)/);
+        if (countryHint) {
+          const known = {日本:'日本',中国:'中国',美国:'美国',法国:'法国',英国:'英国',韩国:'韩国',伊朗:'伊朗',加拿大:'加拿大',俄罗斯:'俄罗斯',智利:'智利',台湾:'中国'};
+          document.getElementById('addCountry').value = known[countryHint[1]] || countryHint[1];
+        }
+      }
+
+      // 7. 标签
+      const tags = [String(year)];
+      if (detectedGroup) {
+        const g = GROUPS.find(gr => gr.key === detectedGroup);
+        if (g) tags.push(g.label.replace(/[🎬🏆🇨🇳]\s*/g,'').trim());
+      }
+      tags.push('B站');
+      if (technique) tags.push(technique);
+      document.getElementById('addTags').value = tags.join(', ');
+
+      st.textContent='✅ B站 数据已自动填充，请核对并补充';
+      st.className='fetch-status ok';
+      // 封面隐藏域
+      let h = document.getElementById('_addCover');
+      if (!h) { h=document.createElement('input'); h.type='hidden'; h.id='_addCover'; document.getElementById('addUrl').parentNode.appendChild(h); }
+      h.value = v.pic || '';
+      // 预览
+      const prv = document.getElementById('addPreview');
+      prv.style.display='block';
+      prv.innerHTML = `<div class="preview-card"><div class="card-thumb" style="background:linear-gradient(135deg,#1a1a30,#0d0d1a)">${
+        v.pic ? `<img src="${v.pic}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''
+      }<div class="card-badges"><span class="badge badge-year">${year}</span></div></div><div class="card-body"><div class="card-title">${title}</div><div class="card-meta">${
+        dur ? `<span>⏱ ${dur}</span>` : ''
+      }${owner ? `<span>🎬 ${owner}</span>` : ''}</div><div class="card-desc">${(v.desc||'').slice(0,100)}</div></div></div>`;
+
     } else {
+      // ---- YouTube 抓取 ----
       const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${p.id}&format=json`);
       if (!r.ok) throw new Error(`oEmbed ${r.status}`);
       const d = await r.json();
-      info = {title:d.title, cover:d.thumbnail_url, desc:d.author_name+' 发布', dur:''};
-      document.getElementById('addTitle').value = info.title;
-      document.getElementById('addTitleEn').value = info.title;
+      const title = d.title;
+      const author = d.author_name || '';
+      const year = new Date().getFullYear();
+
+      document.getElementById('addTitle').value = title;
+      document.getElementById('addDirector').value = author ? `${author}（YouTube频道）` : '';
+      document.getElementById('addYear').value = year;
+      document.getElementById('addDesc').value = `${author} 发布`;
+      document.getElementById('addTags').value = `${year}, YouTube`;
+
+      st.textContent='✅ YouTube 数据已抓取，请补充并确认';
+      st.className='fetch-status ok';
+      // 封面隐藏域
+      let h = document.getElementById('_addCover');
+      if (!h) { h=document.createElement('input'); h.type='hidden'; h.id='_addCover'; document.getElementById('addUrl').parentNode.appendChild(h); }
+      h.value = d.thumbnail_url || '';
+      // 预览
+      const prv = document.getElementById('addPreview');
+      prv.style.display='block';
+      prv.innerHTML = `<div class="preview-card"><div class="card-thumb" style="background:linear-gradient(135deg,#1a1a30,#0d0d1a)">${
+        d.thumbnail_url ? `<img src="${d.thumbnail_url}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''
+      }<div class="card-badges"><span class="badge badge-year">${year}</span></div></div><div class="card-body"><div class="card-title">${title}</div><div class="card-meta">${
+        author ? `<span>🎬 ${author}</span>` : ''
+      }</div><div class="card-desc">${author} 发布</div></div></div>`;
     }
-    if (info.dur) document.getElementById('addDuration').value = info.dur;
-    if (info.desc) document.getElementById('addDesc').value = info.desc;
-    st.textContent=`✅ 已从 ${p.type==='bilibili'?'B站':'YouTube'} 抓取，请补充并确认`;
-    st.className='fetch-status ok';
-    // 存封面URL隐藏域
-    let h = document.getElementById('_addCover');
-    if (!h) { h=document.createElement('input'); h.type='hidden'; h.id='_addCover'; document.getElementById('addUrl').parentNode.appendChild(h); }
-    h.value = info.cover || '';
-    // 预览卡片
-    const prv = document.getElementById('addPreview');
-    prv.style.display='block';
-    prv.innerHTML = `<div class="preview-card"><div class="card-thumb" style="background:linear-gradient(135deg,#1a1a30,#0d0d1a)">${
-      info.cover ? `<img src="${info.cover}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''
-    }<div class="card-badges"><span class="badge badge-year">${document.getElementById('addYear').value||'?'}</span></div></div><div class="card-body"><div class="card-title">${info.title}</div><div class="card-meta">${
-      info.dur ? `<span>⏱ ${info.dur}</span>` : ''
-    }</div><div class="card-desc">${(info.desc||'').slice(0,100)}</div></div></div>`;
     document.getElementById('addDirector').focus();
   } catch(e) {
     st.textContent = p.type==='bilibili'
@@ -1678,14 +1883,14 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
 // 提交添加
 document.getElementById('addSubmitBtn').addEventListener('click', () => {
   const title = document.getElementById('addTitle').value.trim();
-  if (!title) { alert('请填写中文标题'); return; }
+  if (!title) { alert('请填写标题'); return; }
   if (!_lastUrl) { alert('请先输入链接并抓取信息'); return; }
   const added = getAddedWorks();
   const h = document.getElementById('_addCover');
   const tags = document.getElementById('addTags').value.trim();
   const work = {
     id: (function(){const a=getAllWorks();let n=a.length+1,id;do{id=_lastUrl.type==='bilibili'?`added-b${n}`:`added-yt${n}`;n++;}while(a.find(w=>w.id===id));return id;})(),
-    title, titleEn: document.getElementById('addTitleEn').value.trim(),
+    title, titleEn: title,
     director: document.getElementById('addDirector').value.trim() || '—',
     year: parseInt(document.getElementById('addYear').value) || new Date().getFullYear(),
     group: document.getElementById('addGroup').value,
@@ -1701,7 +1906,7 @@ document.getElementById('addSubmitBtn').addEventListener('click', () => {
   localStorage.setItem(ADD_WORKS_KEY, JSON.stringify(added));
   render(); renderAddedList(); updateExportCode();
   // 重置表单，准备添加下一部
-  ['addTitle','addTitleEn','addDirector','addYear','addAward','addTechnique','addCountry','addDuration','addDesc','addTags'].forEach(id=>document.getElementById(id).value='');
+  ['addTitle','addDirector','addYear','addAward','addTechnique','addCountry','addDuration','addDesc','addTags'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('addPreview').style.display='none';
   document.getElementById('fetchStatus').textContent='✅ 已添加！继续下一部，或关闭';
   document.getElementById('fetchStatus').className='fetch-status ok';
@@ -1749,6 +1954,19 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 });
 
 // 搜索输入 + 一键清除
+function _toggleFav(id) {
+  const now = toggleFav(id);
+  // Update all fav buttons with this id
+  document.querySelectorAll(`[data-favid="${id}"]`).forEach(btn => {
+    btn.classList.toggle('active', now);
+    btn.textContent = now ? '❤️' : '♡';
+  });
+  // Update fav count
+  document.getElementById('favCount').textContent = favCount();
+  // Re-render if in fav-only mode
+  if (currentFav) render();
+}
+// 搜索输入 + 一键清除
 const searchInput = document.getElementById('searchInput');
 const searchClear = document.getElementById('searchClear');
 searchInput.addEventListener('input', e => {
@@ -1774,6 +1992,11 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
+document.getElementById('favFilter').addEventListener('click', () => {
+  currentFav = !currentFav;
+  document.getElementById('favFilter').classList.toggle('active', currentFav);
+  render();
+});
 buildFilters();
 render();
 renderAddedList();
