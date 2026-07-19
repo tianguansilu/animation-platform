@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一芥 — 优秀动画分享平台</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #0a0a0f; --bg-secondary: #12121a; --bg-card: #1a1a28;
+    --bg-card-hover: #22223a; --text-primary: #f0eef2; --text-secondary: #9895a8;
+    --text-muted: #6b6880; --accent-gold: #f0b34b; --accent-blue: #4b8bf5;
+    --accent-teal: #2ec4b6; --accent-rose: #e74c7a; --accent-purple: #8b5cf6;
+    --accent-pink: #e879f9; --border-color: #2a2a3e; --border-light: #3a3a52;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4); --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg-primary); color: var(--text-primary);
+    line-height: 1.6; min-height: 100vh; overflow-x: hidden;
+  }
+  a { color: var(--accent-gold); text-decoration: none; transition: var(--transition); }
+  a:hover { color: #ffd; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+  .hero {
+    position: relative; min-height: 480px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 60px 24px 40px;
+    background: linear-gradient(165deg, #0a0a1a 0%, #16162e 40%, #1a0e2a 70%, #0d0d1a 100%);
+    overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(139,92,246,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(240,179,75,0.06) 0%, transparent 50%);
+    animation: heroGlow 8s ease-in-out infinite alternate; pointer-events: none;
+  }
+  @keyframes heroGlow { 0% { transform: translate(0,0) rotate(0deg); } 100% { transform: translate(2%,2%) rotate(2deg); } }
+  .hero-content { position: relative; z-index: 1; max-width: 800px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 34px; padding: 0 20px;
+    background: #1B1B25; border: 1px solid #84744B;
+    border-radius: 999px; margin-bottom: 20px;
+    color: #C9AB6E; font-size: 0.82rem;
+    font-family: "Songti SC", "Noto Serif SC", "STSong", serif;
+    letter-spacing: 0.08em; box-shadow: 0 0 10px rgba(132,116,75,0.2);
+  }
+  .hero-badge .star { color: #CBA75C; font-size: 0.75rem; }
+  .hero h1 {
+    font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 800; letter-spacing: -0.03em;
+    line-height: 1.15; margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, #e0d6ff 40%, var(--accent-gold) 80%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero p { font-size: clamp(1rem, 2vw, 1.2rem); color: var(--text-secondary); max-width: 600px; margin: 0 auto 28px; }
+  .hero-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .hero-stat { text-align: center; }
+  .hero-stat-num { font-size: 1.6rem; font-weight: 700; color: var(--accent-gold); }
+  .hero-stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+  .filter-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.92); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  }
+  .filter-bar .filter-label { font-size: 0.8rem; color: var(--text-muted); margin-right: 4px; white-space: nowrap; }
+  .filter-chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filter-chip {
+    padding: 5px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 500;
+    border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);
+    cursor: pointer; transition: var(--transition); white-space: nowrap;
+  }
+  .filter-chip:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .filter-chip.active { background: rgba(240,179,75,0.15); border-color: var(--accent-gold); color: var(--accent-gold); }
+  .filter-chip.active-year { background: rgba(75,139,245,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+  .filter-spacer { flex: 1; min-width: 20px; }
+  .search-input {
+    background: var(--bg-secondary); border: 1px solid var(--border-color);
+    border-radius: 50px; padding: 6px 30px 6px 36px; font-size: 0.85rem;
+    color: var(--text-primary); width: 200px; transition: var(--transition);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6880' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 12px center;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent-gold); width: 260px; }
+  .search-wrapper { position: relative; display: inline-block; vertical-align: middle; }
+  .search-clear {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 0.85rem; line-height: 1; padding: 2px 6px; border-radius: 50%;
+    transition: var(--transition); display: none; align-items: center; justify-content: center;
+    z-index: 2; height: 20px;
+  }
+  .search-clear:hover { color: var(--text-primary); background: rgba(255,255,255,0.15); }
+  .add-btn {
+    background: linear-gradient(135deg, var(--accent-gold), #e8a835);
+    border: none; border-radius: 50%; width: 32px; height: 32px; min-width: 32px;
+    color: #111; font-size: 1.3rem; font-weight: 700; line-height: 1;
+    cursor: pointer; transition: var(--transition);
+    display: flex; align-items: center; justify-content: center;
+    margin-left: 6px; flex-shrink: 0;
+  }
+  .add-btn:hover { transform: scale(1.12); box-shadow: 0 0 14px rgba(240,179,75,0.45); }
+  .add-modal { max-width: 620px; max-height: 90vh; overflow-y: auto; padding: 28px 32px; }
+  .add-modal h2 { font-size: 1.2rem; margin: 0 0 20px; color: var(--accent-gold); }
+  .add-modal .form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .add-modal .form-group { flex: 1; min-width: 160px; }
+  .add-modal label { display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 3px; }
+  .add-modal input, .add-modal select, .add-modal textarea {
+    width: 100%; box-sizing: border-box;
+    background: var(--bg-secondary); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 8px 12px; font-size: 0.85rem;
+    color: var(--text-primary); transition: var(--transition);
+    font-family: inherit;
+  }
+  .add-modal input:focus, .add-modal select:focus, .add-modal textarea:focus {
+    outline: none; border-color: var(--accent-gold);
+  }
+  .add-modal textarea { min-height: 60px; resize: vertical; }
+  .add-modal .url-row { display: flex; gap: 8px; align-items: start; }
+  .add-modal .url-row input { flex: 1; }
+  .fetch-btn {
+    background: var(--bg-secondary); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 8px 16px; font-size: 0.8rem;
+    color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+    transition: var(--transition); font-family: inherit;
+  }
+  .fetch-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+  .fetch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fetch-status { font-size: 0.78rem; color: var(--text-muted); margin: 4px 0 0; min-height: 1.2em; }
+  .fetch-status.ok { color: var(--accent-teal); }
+  .fetch-status.err { color: #e74c3c; }
+  .add-modal .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+  .add-modal .preview-card {
+    background: var(--bg-card); border-radius: var(--radius-md); overflow: hidden;
+    border: 1px solid var(--border-color); margin-bottom: 16px;
+  }
+  .add-modal .preview-card .card-body { padding: 12px 14px; }
+  .add-modal .preview-card .card-title { font-size: 0.9rem; }
+  .add-modal .preview-card .card-title-en { font-size: 0.78rem; }
+  .add-modal .preview-card .card-meta { font-size: 0.75rem; }
+  .add-modal .preview-card .card-desc { font-size: 0.75rem; }
+  .add-modal .preview-card .card-thumb { padding-top: 50%; }
+  .added-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(240,179,75,0.12); border: 1px solid var(--accent-gold);
+    border-radius: 50px; padding: 3px 12px; font-size: 0.72rem; color: var(--accent-gold);
+    margin-left: 8px; cursor: pointer; transition: var(--transition);
+  }
+  .added-badge:hover { background: rgba(240,179,75,0.2); }
+  .added-badge .del { color: #e74c3c; font-weight: bold; margin-left: 4px; }
+  .export-bar {
+    text-align: center; padding: 12px; margin-top: 8px;
+    border-top: 1px solid var(--border-color);
+  }
+  .export-bar textarea {
+    width: 100%; box-sizing: border-box; min-height: 120px;
+    background: var(--bg-secondary); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 10px; font-size: 0.78rem;
+    color: var(--text-primary); font-family: 'Courier New', monospace;
+    margin-top: 8px; resize: vertical;
+  }
+  .btn-small { padding: 6px 14px; font-size: 0.78rem; border-radius: 6px; }
+  .gallery { max-width: 1400px; margin: 0 auto; padding: 28px 24px 60px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+  .card {
+    background: var(--bg-card); border-radius: var(--radius-md); overflow: hidden;
+    border: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); position: relative;
+  }
+  .card:hover { transform: translateY(-4px); border-color: var(--border-light); box-shadow: var(--shadow); background: var(--bg-card-hover); }
+  .card-thumb {
+    position: relative; width: 100%; padding-top: 56.25%;
+    background: linear-gradient(135deg, #1a1a30 0%, #0d0d1a 100%); overflow: hidden;
+  }
+  .card-thumb img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: var(--transition);
+  }
+  .card:hover .card-thumb img { transform: scale(1.05); }
+  .card-badges {
+    position: absolute; top: 10px; left: 10px; right: 10px;
+    display: flex; gap: 6px; flex-wrap: wrap; z-index: 2;
+  }
+  .badge {
+    padding: 3px 10px; border-radius: 50px; font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.3px; backdrop-filter: blur(8px);
+  }
+  .badge-year { background: rgba(10,10,15,0.75); color: var(--text-primary); }
+  .badge-gold { background: rgba(240,179,75,0.25); color: var(--accent-gold); border: 1px solid rgba(240,179,75,0.3); }
+  .badge-green { background: rgba(46,196,182,0.2); color: var(--accent-teal); border: 1px solid rgba(46,196,182,0.3); }
+  .badge-pink { background: rgba(232,121,249,0.2); color: var(--accent-pink); border: 1px solid rgba(232,121,249,0.3); }
+  .badge-purple { background: rgba(139,92,246,0.2); color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.3); }
+  .badge-blue { background: rgba(75,139,245,0.2); color: var(--accent-blue); border: 1px solid rgba(75,139,245,0.3); }
+  .card-body { padding: 16px 18px 18px; }
+  .card-title { font-size: 1.05rem; font-weight: 700; line-height: 1.3; margin-bottom: 4px; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-title-en { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-bottom: 8px; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 8px; }
+  .card-meta span { display: inline-flex; align-items: center; gap: 4px; }
+  .card-desc { font-size: 0.82rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+  .fav-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 6;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    border: none; color: var(--text-muted); font-size: 1rem;
+    cursor: pointer; transition: var(--transition);
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1; padding: 0; font-family: inherit;
+  }
+  .fav-btn:hover { transform: scale(1.15); background: rgba(0,0,0,0.7); }
+  .fav-btn.active { color: #ff4d6a; }
+  .fav-btn.active:hover { color: #ff6b85; }
+  .modal-fav-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,77,106,0.1); border: 1px solid rgba(255,77,106,0.3);
+    border-radius: 8px; padding: 8px 16px; font-size: 0.85rem;
+    color: #ff4d6a; cursor: pointer; transition: var(--transition);
+    font-family: inherit;
+  }
+  .modal-fav-btn:hover { background: rgba(255,77,106,0.2); }
+  .modal-fav-btn.active { background: #ff4d6a; color: #fff; border-color: #ff4d6a; }
+  .fav-chip { margin-left: 8px; }
+  .fav-chip.active { background: rgba(255,77,106,0.15) !important; border-color: #ff4d6a !important; color: #ff4d6a !important; }
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;
+    padding: 24px; animation: fadeIn 0.25s ease;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--bg-secondary); border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color); max-width: 720px; width: 100%;
+    max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+    animation: modalSlide 0.35s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+  }
+  @keyframes modalSlide { from { transform: translateY(30px) scale(0.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px; z-index: 5;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.5);
+    color: #fff; font-size: 1.2rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: var(--transition);
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+  .modal-banner {
+    width: 100%; height: 200px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #1a1a3a 0%, #2a1a3a 50%, #1a1a2a 100%);
+  }
+  .modal-banner .modal-badges {
+    position: absolute; top: 16px; left: 20px; display: flex; gap: 8px; flex-wrap: wrap; z-index: 3;
+  }
+  .modal-banner-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(0deg, var(--bg-secondary) 0%, transparent 60%); z-index: 1;
+  }
+  .modal-content { padding: 24px 28px 28px; position: relative; z-index: 2; margin-top: -40px; }
+  .modal-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 2px; }
+  .modal-title-en { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; }
+  .modal-info-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 20px; padding: 16px;
+    background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); border: 1px solid var(--border-color);
+  }
+  .modal-info-item { display: flex; flex-direction: column; }
+  .modal-info-item label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 2px; }
+  .modal-info-item span { font-size: 0.9rem; color: var(--text-primary); font-weight: 500; }
+  .modal-desc { font-size: 0.92rem; line-height: 1.7; color: var(--text-secondary); margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px;
+    border-radius: 50px; font-size: 0.85rem; font-weight: 600; border: none;
+    cursor: pointer; transition: var(--transition);
+  }
+  .btn-primary { background: var(--accent-gold); color: #0a0a0f; }
+  .btn-primary:hover { background: #f5c062; transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+  .btn-secondary:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .btn-xhs { background: var(--accent-rose); color: #fff; }
+  .btn-xhs:hover { background: #f0608e; transform: translateY(-1px); }
+  .empty-state { grid-column: 1 / -1; text-align: center; padding: 80px 24px; color: var(--text-muted); }
+  .empty-state .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+  .empty-state h3 { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 8px; }
+  /* 筛选计数徽章与结果统计 */
+  .chip-count { opacity: 0.6; font-size: 0.72rem; margin-left: 4px; }
+  .result-count { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; }
+  .result-count b { color: var(--accent-gold); font-weight: 600; }
+  .badge-rose { background: rgba(231,76,122,0.2); color: var(--accent-rose); border: 1px solid rgba(231,76,122,0.3); }
+  /* 一键回到顶部 */
+  .back-to-top {
+    position: fixed; right: 24px; bottom: 24px; z-index: 150;
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(240,179,75,0.92); color: #0a0a0f; border: none;
+    font-size: 1.25rem; line-height: 1; cursor: pointer; box-shadow: var(--shadow);
+    opacity: 0; pointer-events: none; transform: translateY(12px);
+    transition: var(--transition);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .back-to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .back-to-top:hover { background: #f5c062; transform: translateY(-2px); }
+  .footer { border-top: 1px solid var(--border-color); padding: 32px 24px; text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+  .footer a { color: var(--text-secondary); }
+  .footer a:hover { color: var(--accent-gold); }
+  @media (max-width: 768px) {
+    .hero { min-height: 360px; padding: 40px 20px 30px; }
+    .filter-bar { padding: 10px 16px; flex-direction: column; align-items: stretch; }
+    .search-wrapper { width: 100%; }
+    .search-input { width: 100%; }
+    .search-input:focus { width: 100%; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .modal-content { padding: 20px; }
+    .modal-info-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } .modal-info-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-content">
+    <div class="hero-badge"><span class="star">✦</span> 一芥 · 芥子纳须弥</div>
+    <h1>一芥</h1>
+    <p>优秀动画分享平台<br><span style="font-size:0.85em;color:var(--text-muted)">万象落于一芥，刹那即是永恒</span></p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="totalWorks">0</div>
+        <div class="hero-stat-label">收录作品</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="totalSchools">0</div>
+        <div class="hero-stat-label">院校/影展</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="totalYears">2</div>
+        <div class="hero-stat-label">年度跨度</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="filter-bar" id="filterBar">
+  <span class="filter-label">来源</span>
+  <div class="filter-chip-group" id="festivalFilters"></div>
+  <button class="filter-chip fav-chip" id="favFilter">❤️ 收藏<span class="chip-count" id="favCount">0</span></button>
+  <span class="filter-label" style="margin-left:8px;">年度</span>
+  <div class="filter-chip-group" id="yearFilters"></div>
+  <div class="filter-spacer"></div>
+  <div class="search-wrapper">
+    <input type="text" class="search-input" id="searchInput" placeholder="搜索作品、导演、奖项、国家…">
+    <button class="search-clear" id="searchClear" aria-label="清除搜索">✕</button>
+  </div>
+  <button class="add-btn" id="addBtn" title="添加新作品">+</button>
+</nav>
+
+<main class="gallery">
+  <div class="result-count" id="resultCount"></div>
+  <div class="grid" id="workGrid"></div>
+</main>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-banner" id="modalBanner">
+      <div class="modal-badges" id="modalBadges"></div>
+      <div class="modal-banner-overlay"></div>
+    </div>
+    <div class="modal-content">
+      <h2 class="modal-title" id="modalTitle"></h2>
+      <div class="modal-title-en" id="modalTitleEn"></div>
+      <div class="modal-info-grid" id="modalInfo"></div>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>一芥 · 优秀动画分享平台 · 全部链接经人工逐条验证可播放</p>
+  <p style="margin-top:4px; font-size:0.75rem;"><span id="footerCount">0</span> 部作品</p>
+</footer>
+
+<button class="back-to-top" id="backToTop" title="回到顶部" aria-label="回到顶部">↑</button>
+
+<!-- ═══ 添加新作品弹窗 ═══ -->
+<div class="modal-overlay" id="addModalOverlay">
+  <div class="modal add-modal" id="addModal">
+    <button class="modal-close" id="addModalClose">✕</button>
+    <h2>✚ 添加新作品</h2>
+
+    <!-- 链接输入 -->
+    <div class="form-row url-row">
+      <div class="form-group" style="flex:1">
+        <label for="addUrl">B站 / YouTube 链接</label>
+        <input type="url" id="addUrl" placeholder="https://www.bilibili.com/video/BV... 或 https://youtu.be/...">
+        <div class="fetch-status" id="fetchStatus"></div>
+      </div>
+      <button class="fetch-btn" id="fetchBtn" style="margin-top:18px">🔍 抓取信息</button>
+    </div>
+
+    <!-- 预览卡片 -->
+    <div id="addPreview" style="display:none"></div>
+
+    <!-- 基本信息 -->
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label for="addTitle">标题 *</label>
+        <input type="text" id="addTitle" placeholder="作品标题（中日英皆可）">
+      </div>
+      <input type="hidden" id="addTitleEn">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="addDirector">导演</label>
+        <input type="text" id="addDirector" placeholder="导演名">
+      </div>
+      <div class="form-group">
+        <label for="addYear">年份</label>
+        <input type="number" id="addYear" min="2010" max="2030" placeholder="2024">
+      </div>
+      <div class="form-group">
+        <label for="addGroup">分类</label>
+        <select id="addGroup"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="addCountry">国家</label>
+        <input type="text" id="addCountry" placeholder="中国 / 日本 / 美国…">
+      </div>
+      <div class="form-group">
+        <label for="addTechnique">技法</label>
+        <input type="text" id="addTechnique" placeholder="2D 手绘 / 3D CGI / 定格…">
+      </div>
+      <div class="form-group">
+        <label for="addDuration">时长</label>
+        <input type="text" id="addDuration" placeholder="5:30">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="addAward">奖项</label>
+        <input type="text" id="addAward" placeholder="🏆 第XX届奥斯卡·提名">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="addTags">标签（用逗号分隔）</label>
+        <input type="text" id="addTags" placeholder="2024, 奥斯卡, 法国, 2D">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="addDesc">简介</label>
+        <textarea id="addDesc" placeholder="作品简介…"></textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <span style="flex:1; font-size:0.78rem; color:var(--text-muted); align-self:center;">
+        添加后保存在浏览器中，<button class="added-badge" id="showAddedBtn" style="display:none">📋 查看已添加</button>
+      </span>
+      <button class="btn btn-secondary" id="addCancelBtn">取消</button>
+      <button class="btn btn-primary" id="addSubmitBtn">✔ 添加作品</button>
+    </div>
+    <div class="export-bar" id="exportBar" style="display:none">
+      <button class="btn btn-small btn-secondary" id="exportBtn">📋 复制 JS 代码到剪贴板（永久保存到 HTML）</button>
+      <textarea id="exportCode" readonly placeholder="新增作品的 JS 代码会出现在这里…"></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORKS = [
+  // ==========================================================
+  // 🏆 影展获奖 / 知名独立短片（已验证可播放）
+  // ==========================================================
+  {
+    id: 'oscar-2024-war-is-over',
+    title: '战争结束了！',
+    titleEn: 'WAR IS OVER! Inspired by the Music of John & Yoko',
+    director: 'Dave Mullins / Sean Ono Lennon',
+    year: 2023, group: 'festival',
+    award: '🏆 第96届奥斯卡·最佳动画短片（获奖）',
+    technique: 'CGI 三维动画', country: '美国', duration: '11:21',
+    description: '前皮克斯动画师Dave Mullins执导，约翰·列侬与小野洋子反战歌曲为灵感的动画短片。一战期间敌对双方士兵通过信鸽传递棋局，在战火中建立连结。由Wētā FX参与制作，Sean Ono Lennon担任制片。',
+    vid: 'W68-XaFepOg',
+    tags: ['2024', '奥斯卡', '获奖', 'CGI', '美国']
+  },
+  {
+    id: 'short-forevergreen',
+    title: 'FOR EVERGREEN / 常青',
+    titleEn: 'FOREVERGREEN',
+    director: 'Josh Garrels',
+    year: 2024, group: 'festival',
+    award: '🏆 奥斯卡·最佳动画短片提名',
+    technique: '2D 手绘', country: '美国', duration: '13:06',
+    description: '生命的循环与更新的故事。一棵古老树木见证了岁月的变迁，在四季更替中展开了一幅关于时间、记忆与希望的画卷。诗意的叙事与手绘画面相得益彰。Oscar提名作品。',
+    vid: 'B4EPW7JUMTM',
+    tags: ['2025', '奥斯卡', '提名', '2D', '美国']
+  },
+  {
+    id: 'short-lost-and-found',
+    title: 'Lost & Found / 失物招领',
+    titleEn: 'Lost & Found',
+    director: 'Andrew Goldsmith, Bradley Slabe',
+    year: 2019, group: 'festival',
+    award: '奥斯卡·最佳动画短片短名单入选',
+    technique: '定格动画 (stop-motion)', country: '澳大利亚', duration: '7:39',
+    description: '一家失物招领处里，一只毛线编织的小狐狸为了拯救面临解体的朋友，不惜拆散自己。以精致的定格动画技术和令人心碎的故事，成为当年奥斯卡短名单中关注度最高的作品之一。YouTube 1028万次播放。',
+    vid: '35i4zTky9pI',
+    tags: ['2024', '奥斯卡', '短名单', '定格', '澳大利亚']
+  },
+  {
+    id: 'short-dinner-for-few',
+    title: 'Dinner for Few / 少数人的晚餐',
+    titleEn: 'Dinner for Few',
+    director: 'Nassos Vakalis',
+    year: 2015, group: 'festival',
+    award: '奥斯卡资格·多国际动画节获奖',
+    technique: '2D 手绘 / 数字动画', country: '希腊', duration: '10:10',
+    description: '一部充满政治寓言的动画短片——上层阶级的大快朵颐与底层民众的挣扎形成了鲜明对比。暗黑风格的视觉语言和尖锐的社会讽刺，使其成为网络现象级作品。YouTube 1732万次播放。',
+    vid: 'HTDdIO74BuA',
+    tags: ['2024', '政治寓言', '独立', '希腊', '讽刺']
+  },
+  {
+    id: 'short-snow-bear',
+    title: '雪熊 / 雪地之熊',
+    titleEn: 'SNOW BEAR - A Hand-Drawn Animated Short Film (4K)',
+    director: 'Aaron Blaise',
+    year: 2025, group: 'festival',
+    award: '—',
+    technique: '2D 手绘', country: '美国', duration: '11:46',
+    description: '前迪士尼动画师（《狮子王》《美女与野兽》《阿拉丁》）Aaron Blaise 手绘4K短片。讲述了一只北极熊幼崽在冰雪世界中冒险与成长的故事。全片纯手绘，每一帧都堪称艺术品。616万次播放。',
+    vid: 'xOXolSQcEb4',
+    tags: ['2024', '手绘', '动物', '美国', '迪士尼']
+  },
+  {
+    id: 'short-eeva',
+    title: 'Eeva / 伊娃',
+    titleEn: 'Eeva',
+    director: 'Morten Tšinakov & Lucija Mrzljak',
+    year: 2023, group: 'festival',
+    award: '奥斯卡·最佳动画短片短名单·萨格勒布动画节大奖',
+    technique: '2D 手绘 / 实验', country: '爱沙尼亚 / 克罗地亚', duration: '15:00',
+    description: '黑色幽默风格的葬礼故事。在一个荒诞的守夜过程中，各种古怪角色轮番登场，幽默与悲伤交织。独特的粗犷手绘风格与东欧动画特有的冷幽默。',
+    vid: 's0Yi1VdIZys',
+    tags: ['2024', '萨格勒布', '获奖', '2D', '爱沙尼亚', '幽默']
+  },
+  {
+    id: 'oscar-2025-cypress',
+    title: '柏树阴影下',
+    titleEn: 'In the Shadow of the Cypress (2024)',
+    director: 'Hossein Molayemi & Shirin Sohani',
+    year: 2024, group: 'festival',
+    award: '🏆 第97届奥斯卡·最佳动画短片（获奖）',
+    technique: '2D 手绘', country: '伊朗', duration: '20:23',
+    description: '伊朗2D动画，Hossein Molayemi与Shirin Sohani耗时6年共同完成。患有PTSD的前船长与女儿隐居海边小屋，他渴望成为尽职的父亲，却始终无法与女儿真正沟通——直到一天清晨，一场意外永远改变了他们的生活。画面富有抽象迷人的诗意色彩。第97届奥斯卡最佳动画短片获奖作品，B站15.1万播放。',
+    bvid: 'BV1189qYxEJh',
+    bcover: 'https://i1.hdslb.com/bfs/archive/4c2897680745ef65f7429e06d40754fa54e17fac.jpg',
+    tags: ['2024', '奥斯卡', '获奖', '2D', '伊朗']
+  },
+  {
+    id: 'oscar-2023-ice-merchants',
+    title: '冰块商人',
+    titleEn: 'Ice Merchants (2022)',
+    director: 'João Gonzalez',
+    year: 2022, group: 'festival',
+    award: '🏆 第95届奥斯卡·最佳动画短片提名',
+    technique: '2D 手绘', country: '葡萄牙', duration: '13:42',
+    description: '一对父子每天从悬崖上的家跳伞而下，去村里售卖冰块——直到气温上升、冰雪消融，他们必须寻找新的生活方式。全片无对白，以油画般的质感和动人音乐讲述亲情与告别。史上第一部提名奥斯卡最佳动画短片的葡萄牙作品，B站15.3万播放。',
+    bvid: 'BV1ky4y1R7BN',
+    bcover: 'https://i0.hdslb.com/bfs/archive/f1e812f333e0dc9c5919de711f71f527c3ef0e4e.jpg',
+    tags: ['2022', '奥斯卡', '提名', '2D', '葡萄牙']
+  },
+  {
+    id: 'oscar-2025-magic-candies',
+    title: '魔糖',
+    titleEn: 'Magic Candies (2024)',
+    director: '西尾大介 / 东映动画',
+    year: 2024, group: 'festival',
+    award: '🏆 第97届奥斯卡·最佳动画短片提名',
+    technique: 'CGI 三维动画', country: '日本', duration: '20:38',
+    description: '东映动画出品，西尾大介执导。其他孩子从不叫东东一起玩，但他有自己心爱的弹珠。直到某天他买回一袋五颜六色的糖果——吃下糖果后，他开始听到沙发、弹珠乃至父亲内心的声音。温暖治愈的成长故事，以顶级3D动画细腻呈现。第97届奥斯卡最佳动画短片提名。',
+    bvid: 'BV1YRNzeTEzq',
+    bcover: 'https://i1.hdslb.com/bfs/archive/6e1c3b551e45ad65c80e66ceae159d002daf1d68.jpg',
+    tags: ['2024', '奥斯卡', '提名', 'CGI', '日本', '东映']
+  },
+  {
+    id: 'annecy-2024-percebes',
+    title: '欢喜来做客（藤壶）',
+    titleEn: 'Percebes (2024)',
+    director: 'Alexandra Ramires & Laura Gonçalves',
+    year: 2024, group: 'festival',
+    award: '🏆 2024昂西动画节·水晶大奖（最佳短片）·奥斯卡短名单',
+    technique: '2D 手绘', country: '葡萄牙 / 法国', duration: '11:28',
+    description: '以对阿尔加维人意义非凡的奇特贝类"藤壶"为名，动画与纪录片手法交融：从贝壳在礁石上的生长，到采贝人与大海的搏斗，精致呈现一个社区与海洋的共生关系。2024年昂西国际动画节短片单元最高奖"水晶大奖"得主，并入选第97届奥斯卡最佳动画短片短名单。',
+    bvid: 'BV1HPoUY9E15',
+    bcover: 'https://i1.hdslb.com/bfs/archive/4b51e43b1cf123a5a76aa034d317d87c12789df6.jpg',
+    tags: ['2024', '昂西', '获奖', '奥斯卡', '2D', '葡萄牙']
+  },
+
+  // ==========================================================
+  // 🎓 Gobelins, l'école de l'image（官方频道已验证）
+  // ==========================================================
+  {
+    id: 'gobelins-2024-shyness-trees',
+    title: '树的羞怯',
+    titleEn: 'THE SHYNESS OF TREES',
+    director: 'GOBELINS 2024届',
+    year: 2024, group: 'gobelins',
+    award: '2024 GOBELINS 毕业作品·官方频道发布',
+    technique: 'CGI / 3D', country: '法国', duration: '8:57',
+    description: '词语从世界上消失了，只剩下画面残留在墙壁和笔记本上。一位女性踏上了寻找语言起源的旅程。以超现实的视觉风格和极具氛围感的3D画面，探讨了语言、记忆与存在的关系。',
+    vid: 'aiQC-8E_7lE',
+    tags: ['2024', 'Gobelins', '毕业作品', 'CGI', '法国']
+  },
+  {
+    id: 'gobelins-2025-chere-fin',
+    title: '亲爱的结局',
+    titleEn: 'CHÈRE FIN,',
+    director: 'GOBELINS 2025届',
+    year: 2025, group: 'gobelins',
+    award: '2025 GOBELINS 毕业作品',
+    technique: '2D 手绘', country: '法国', duration: '7:50',
+    description: '2025年Gobelins最新毕业作品。以一封写给"结局"的信为线索展开叙事——当一切即将结束时，应该说什么再见？视觉风格细腻动人。',
+    vid: 'AhlbmnCRKz0',
+    tags: ['2025', 'Gobelins', '毕业作品', '2D', '法国']
+  },
+  {
+    id: 'gobelins-2024-wormwood',
+    title: '苦艾',
+    titleEn: 'WORMWOOD',
+    director: 'GOBELINS 2024届',
+    year: 2024, group: 'gobelins',
+    award: '2024 GOBELINS 毕业作品',
+    technique: 'CGI / 3D', country: '法国', duration: '9:59',
+    description: '在荒凉的后末日世界中，一个孤独的拾荒者发现了一种具有神奇力量的植物。黑暗却又充满诗意的氛围，细腻的CG画面构建了一个令人难忘的世界。',
+    vid: 'u6MIQMaJT7M',
+    tags: ['2024', 'Gobelins', '毕业作品', 'CGI', '法国', '后末日']
+  },
+  {
+    id: 'gobelins-2024-catfish',
+    title: '鲶鱼',
+    titleEn: 'CATFISH',
+    director: 'GOBELINS 2024届',
+    year: 2024, group: 'gobelins',
+    award: '2024 GOBELINS 毕业作品',
+    technique: '2D 手绘', country: '法国', duration: '6:33',
+    description: '水下的世界藏着什么秘密？一个关于钓鱼的日常场景逐渐被超现实的元素渗透，最终演变成一场视觉与心理的奇幻之旅。自由奔放的手绘风格。',
+    vid: 'aZJqeYG0hYs',
+    tags: ['2024', 'Gobelins', '毕业作品', '2D', '法国']
+  },
+  {
+    id: 'gobelins-2021-goodbye-jerome',
+    title: '再见，杰罗姆！',
+    titleEn: 'AU REVOIR JÉRÔME !',
+    director: 'Chloé Farr, Gabrielle Selnet, Adam Sillard',
+    year: 2021, group: 'gobelins',
+    award: '🏆 2024 安锡国际动画节·最佳学生电影奖',
+    technique: '水彩 + 拼贴', country: '法国', duration: '7:44',
+    description: '杰罗姆来到天堂四处寻找妻子，可天堂是一个光怪陆离的迷宫。水彩与拼贴的混合风格，在超现实画面中讲述了一个关于失去、寻找与放手的动人故事。原Gobelins毕业作品，安锡获奖。62万次播放。',
+    vid: 'aKJWZzNeyH8',
+    tags: ['2024', 'Gobelins', '毕业作品', '安锡', '获奖', '法国']
+  },
+  {
+    id: 'gobelins-2023-kakomando',
+    title: 'KAKOMANDO / 过去之人',
+    titleEn: 'KAKOMANDO',
+    director: 'GOBELINS 2023届',
+    year: 2023, group: 'gobelins',
+    award: '2023 GOBELINS 毕业作品',
+    technique: '2D 手绘', country: '法国', duration: '7:22',
+    description: '一个被过去记忆纠缠的人，活在回忆的牢笼中。直到某天，他遇见了另一个同样背负着沉重过去的人。极富表现力的手绘和光影运用。',
+    vid: 'X4GS5LNgtyw',
+    tags: ['2023', 'Gobelins', '毕业作品', '2D', '法国']
+  },
+
+  // ==========================================================
+  // 🎓 东京艺术大学（GEIDAI ANIMATION 官方频道已验证）
+  // ==========================================================
+  {
+    id: 'geidai-2025-gut-and-glory',
+    title: '熱、愛 / 热血与荣耀',
+    titleEn: 'Gut and Glory',
+    director: 'Kaho Wakiya (わきや かほ)',
+    year: 2025, group: 'geidai',
+    award: '2025 东京艺大·大学院修了制作',
+    technique: '2D 手绘', country: '日本', duration: '5:01',
+    description: '东京艺术大学大学院映像研究科第十五期生修了制作。充满力量感的手绘线条与高饱和色彩，讲述了一个关于内心挣扎与自我超越的故事。',
+    vid: 'fiN1Bv9uqqg',
+    tags: ['2025', '东京艺大', 'GEIDAI', '毕业作品', '日本', '2D']
+  },
+  {
+    id: 'geidai-2025-little-fish',
+    title: '小さな魚 / 小鱼',
+    titleEn: 'Little Fish',
+    director: 'YANG Yang (楊 暘)',
+    year: 2025, group: 'geidai',
+    award: '2025 东京艺大·大学院修了制作',
+    technique: '2D 水彩风', country: '日本', duration: '2:18',
+    description: '以轻柔的水彩质感描绘一条小鱼的旅程。极简的画面与流动的叙事，在短短两分钟内承载了对自由与归属的诗意探索。',
+    vid: 'vn0M2EDTsf0',
+    tags: ['2025', '东京艺大', 'GEIDAI', '毕业作品', '日本']
+  },
+  {
+    id: 'geidai-2025-dog',
+    title: 'My Life as a Dog / 狗生',
+    titleEn: 'My Life as a Dog',
+    director: 'Ryota TETSUZAKI (鉄崎 凌大)',
+    year: 2025, group: 'geidai',
+    award: '2025 东京艺大·大学院修了制作',
+    technique: '3D CGI', country: '日本', duration: '4:45',
+    description: '以狗的视角审视人类世界的荒诞与温情。细腻的3D画面与拟人化叙事，探索了宠物与主人之间超越语言的羁绊。',
+    vid: 'gaQS2wl5ZhA',
+    tags: ['2025', '东京艺大', 'GEIDAI', '毕业作品', 'CGI', '日本']
+  },
+  {
+    id: 'geidai-2025-nennen',
+    title: 'ねんねん / 小毯子',
+    titleEn: 'Nen-nen, my blankie',
+    director: 'Yu TAKEHARA (竹原 結)',
+    year: 2025, group: 'geidai',
+    award: '2025 东京艺大·大学院修了制作',
+    technique: '混合技法', country: '日本', duration: '3:53',
+    description: '一条陪伴多年的小毯子，承载着童年的记忆与安全感。温暖治愈的短片，以柔软的视觉语言唤起每个人心中对"安心之物"的怀念。',
+    vid: 'IgCAKG5A4rU',
+    tags: ['2025', '东京艺大', 'GEIDAI', '毕业作品', '日本', '治愈']
+  },
+  {
+    id: 'geidai-2025-hole',
+    title: '穴 / 洞',
+    titleEn: 'The Hole',
+    director: 'Sawako NAKAGAWA (なかがわさわこ)',
+    year: 2025, group: 'geidai',
+    award: '2025 东京艺大·大学院修了制作',
+    technique: '2D 手绘', country: '日本', duration: '6:13',
+    description: '地面上出现了一个洞，人们围观、议论、投射自己的想象。以荒诞而幽默的笔触描绘群体心理。洞中到底有什么？答案或许不在洞里。',
+    vid: 'FRF0AGMaWqs',
+    tags: ['2025', '东京艺大', 'GEIDAI', '毕业作品', '日本', '2D']
+  },
+  {
+    id: 'geidai-2025-house-rattler',
+    title: '鬼とやなり / 屋鸣',
+    titleEn: 'House Rattler',
+    director: 'Shinobu Soejima (副島 しのぶ)',
+    year: 2025, group: 'geidai',
+    award: '2025 东京艺大·大学院修了制作',
+    technique: '2D 手绘', country: '日本', duration: '6:27',
+    description: '古旧房屋中的吱呀作响——那是谁的声音？将"房屋的呼吸"具象化为一个神秘的存在，在日式幽玄美学中探索家与记忆的主题。',
+    vid: 'ItaBDRkpgwU',
+    tags: ['2025', '东京艺大', 'GEIDAI', '毕业作品', '日本', '2D']
+  },
+
+  // ==========================================================
+  // 🎓 多摩美术大学（Tama Art University 官方频道已验证）
+  // ==========================================================
+  {
+    id: 'tama-2025-night-owl',
+    title: '夜猫',
+    titleEn: 'NIGHT OWL',
+    director: 'LIN Junjian (リン ジュンケン)',
+    year: 2025, group: 'tama',
+    award: '2025 多摩美术大学毕业作品',
+    technique: '2D 手绘 / 数字动画', country: '日本', duration: '8:57',
+    description: '夜幕降临，一只夜猫在都市的黑暗中穿行。在霓虹与阴影的交错中，它见证着城市夜晚的众生相。以独特的笔触和光影运用描绘了夜色中的孤独与诗意。',
+    vid: 'cavGjfBre14',
+    tags: ['2025', '多摩美术大学', 'Tama Art University', '毕业作品', '日本']
+  },
+  {
+    id: 'tama-2025-spring-storm',
+    title: 'Spring storm / 春岚',
+    titleEn: 'Spring storm',
+    director: 'Hanaka OWADA (大和田華加)',
+    year: 2025, group: 'tama',
+    award: '2025 多摩美术大学毕业作品',
+    technique: '2D 手绘', country: '日本', duration: '4:03',
+    description: '春日的暴风雨来临前夕，一位少女在躁动的空气中回忆着某个重要的人。以细腻的线条和清新的色彩捕捉了青春期特有的敏感与不安。',
+    vid: 'RzfNfAqTl8E',
+    tags: ['2025', '多摩美术大学', 'Tama Art University', '毕业作品', '日本']
+  },
+  {
+    id: 'tama-2025-fox-elevator',
+    title: 'THE FOX ELEVATOR BOY RENARD / 狐狸电梯少年',
+    titleEn: 'THE FOX ELEVATOR BOY RENARD',
+    director: 'Nagomi UENO (上野 和海)',
+    year: 2025, group: 'tama',
+    award: '2025 多摩美术大学毕业作品',
+    technique: '2D 手绘', country: '日本', duration: '1:27',
+    description: '大厦电梯里，一位戴狐狸面具的少年每日往返于各楼层之间。极短的篇幅却承载了丰富的想象空间。以独特的角色设计和色彩感成为话题之作。152万次播放。',
+    vid: 'UEJnkUoHUGE',
+    tags: ['2025', '多摩美术大学', 'Tama Art University', '毕业作品', '日本']
+  },
+  {
+    id: 'tama-2025-yapolaponky',
+    title: 'ヤポラポンキー',
+    titleEn: 'Yapolaponky',
+    director: 'Masataka KIHARA (木原 正天)',
+    year: 2025, group: 'tama',
+    award: '2025 多摩美术大学毕业作品',
+    technique: '实验动画', country: '日本', duration: '6:22',
+    description: '天马行空的声音与画面实验。以音乐般的节奏感驱动，各种奇形怪状的角色在一个不可思议的世界中跳跃、碰撞、融合。纯粹想象力的狂欢。',
+    vid: '-m-8O6U1Fcc',
+    tags: ['2025', '多摩美术大学', 'Tama Art University', '毕业作品', '日本', '实验']
+  },
+
+  // ==========================================================
+  // 🎓 京都精华大学（Seika Animation 官方频道已验证）
+  // ==========================================================
+  {
+    id: 'seika-2024-namushichou',
+    title: 'なむしちょうとなる。',
+    titleEn: 'Namushichou to Naru',
+    director: '増田 果音 / 京都精华大学',
+    year: 2024, group: 'seika',
+    award: '2024 京都精华大学·学科推荐作品',
+    technique: '2D 手绘', country: '日本', duration: '4:19',
+    description: '京都精华大学漫画学部动画学科2024年度毕业制作·学科推荐作品。高中生雨架的故事——细腻的日常描绘中透出青春的微光与迷茫。',
+    vid: 'BWQj6MM9oRM',
+    tags: ['2024', '京都精华', '毕业作品', '日本', '2D']
+  },
+  {
+    id: 'seika-2024-fallen-star',
+    title: 'Fallen Star / 陨星',
+    titleEn: 'Fallen Star',
+    director: '京都精华大学',
+    year: 2024, group: 'seika',
+    award: '2024 京都精华大学·Seika Anime Selection',
+    technique: '2D 手绘', country: '日本', duration: '9:19',
+    description: '一颗星星坠落到地球上变成了一只发光的生物。小女孩发现并守护着它，但星星终有一天要回到天空。关于相遇与离别的童话。',
+    vid: 'Af3Kvd_CbLY',
+    tags: ['2024', '京都精华', '毕业作品', '日本', '2D', '奇幻']
+  },
+  {
+    id: 'seika-2024-monster',
+    title: '怪物',
+    titleEn: 'Monster',
+    director: '京都精华大学',
+    year: 2024, group: 'seika',
+    award: '2024 京都精华大学·Seika Anime Selection',
+    technique: '2D 手绘', country: '日本', duration: '10:12',
+    description: '每个人心中都住着一头怪物。少女与内心怪物的对抗与和解——将抽象的心理斗争具象化为充满想象力的视觉盛宴。',
+    vid: 'M9lrHJf9Jsg',
+    tags: ['2024', '京都精华', '毕业作品', '日本', '2D', '心理']
+  },
+  {
+    id: 'seika-2025-shell',
+    title: 'SHELL / 壳',
+    titleEn: 'SHELL',
+    director: '京都精华大学·动画实践实习',
+    year: 2025, group: 'seika',
+    award: '2025 京都精华大学·动画实践实习作品',
+    technique: '3D CGI', country: '日本', duration: '5:45',
+    description: '一个关于"壳"的故事——外在的保护与内在自我之间的辩证关系。硬壳之下藏着柔软的心，而打破壳的过程往往伴随着成长的阵痛。',
+    vid: 'HwLLcnCq7CQ',
+    tags: ['2025', '京都精华', '毕业作品', 'CGI', '日本']
+  },
+
+  // ==========================================================
+  // 🎓 其他院校
+  // ==========================================================
+  {
+    id: 'sva-2025-wings',
+    title: 'Wings / 翅膀',
+    titleEn: 'Wings | Animated Short Film | SVA Thesis',
+    director: 'Gothfrog (SVA)',
+    year: 2025, group: 'other',
+    award: 'SVA (纽约视觉艺术学院) 毕业作品',
+    technique: '3D CGI', country: '美国', duration: '5:53',
+    description: '一只孤独的小蝙蝠因为没有翅膀而被同类排斥，但它发现自己拥有独特的"声音"——以声波感知世界的能力。一部关于与众不同即是天赋的暖心故事。YouTube 1137万次播放。',
+    vid: 'RtU8nBnpFVE',
+    tags: ['2025', 'SVA', '纽约视觉艺术学院', '毕业作品', 'CGI', '美国']
+  },
+  {
+    id: 'calarts-2023-candy-apple',
+    title: 'CANDY APPLE / 糖苹果',
+    titleEn: 'CANDY APPLE',
+    director: 'Tianxiang Liu (CalArts)',
+    year: 2023, group: 'calarts',
+    award: '2023 CalArts 角色动画毕业作品',
+    technique: '2D 手绘', country: '美国', duration: '7:38',
+    description: '在一个充满甜蜜诱惑的世界中，一个女孩对糖苹果的渴望将她带入了一段超现实的冒险。CalArts角色动画2023届毕业作品，充满童趣与想象力。',
+    vid: 'eI9JkmulqkE',
+    tags: ['2023', 'CalArts', '毕业作品', '2D', '美国']
+  },
+  {
+    id: 'scad-2020-mandrake',
+    title: '曼德拉草',
+    titleEn: 'The Mandrake',
+    director: 'SCAD 2020届',
+    year: 2020, group: 'other',
+    award: 'SCAD 动画毕业作品·115万次播放',
+    technique: '3D CGI', country: '美国', duration: '8:01',
+    description: '在神秘的植物世界里，一颗曼德拉草宝宝的生长冒险。以极其精致的三维画面和拟人化处理，将曼德拉草的传说转化为一部充满童趣的奇幻短片。',
+    vid: 'UhDsRp0EfbA',
+    tags: ['2024', 'SCAD', '毕业作品', 'CGI', '美国']
+  },
+  {
+    id: 'short-hidari',
+    title: 'HIDARI / 左之·武士',
+    titleEn: 'HIDARI - The Stop-Motion Samurai Film',
+    director: '—',
+    year: 2024, group: 'other',
+    award: '—',
+    technique: '定格动画 (stop-motion)', country: '—', duration: '5:32',
+    description: '精雕细琢的定格动画武士片。每一帧的人偶与场景都凝聚着匠人精神，打斗场面流畅而充满张力，展现了定格动画在动作表现上的无限可能。',
+    vid: 'DpefYPLH67A',
+    tags: ['2024', '定格', '武士', '独立动画']
+  },
+  {
+    id: 'short-contretemps',
+    title: 'CONTRETEMPS / 意外',
+    titleEn: 'CONTRETEMPS',
+    director: 'GOBELINS 2021届',
+    year: 2021, group: 'gobelins',
+    award: 'GOBELINS 2021 毕业作品·83万次播放',
+    technique: '2D 手绘', country: '法国', duration: '6:48',
+    description: '一个简单的小意外如何引发一连串不可控的连锁反应？以精巧的叙事结构和灵动的2D动画，展现了一出由蝴蝶效应驱动的都市悲喜剧。',
+    vid: 'ot9DnkGP6Gg',
+    tags: ['2024', 'Gobelins', '毕业作品', '2D', '法国']
+  },
+  {
+    id: 'gobelins-2025-niccolo',
+    title: '尼科罗',
+    titleEn: 'NICCOLO',
+    director: 'GOBELINS 2025届',
+    year: 2025, group: 'gobelins',
+    award: '2025 GOBELINS 毕业作品·167万次播放',
+    technique: '2D 手绘 / 数字动画', country: '法国', duration: '5:36',
+    description: '一位天赋异禀的音乐家对成名的追求使他陷入观众的期待牢笼——直到一把断裂的小提琴迫使他做出选择。哥特暗黑风格的手绘动画，在视觉与音乐的共振中讲述艺术家的自我救赎。',
+    vid: 'O515YeHQhYE',
+    tags: ['2025', 'Gobelins', '毕业作品', '2D', '法国', '音乐']
+  },
+  {
+    id: 'gobelins-2025-rossini',
+    title: '罗西尼花园',
+    titleEn: 'LE JARDIN ROSSINI',
+    director: 'GOBELINS 2025届',
+    year: 2025, group: 'gobelins',
+    award: '2025 GOBELINS 毕业作品·9.9万次播放',
+    technique: '2D 手绘', country: '法国', duration: '10:06',
+    description: 'Herve Rossini是一位以超现实主义花园闻名的艺术家。在他最后一次展览的夜晚，他向公众和女儿Rosalie揭示了一个令人惊讶的计划——他希望融入自己的创作之中。关于父女传承与自我追寻的故事。',
+    vid: 'mvh2T2XzSvg',
+    tags: ['2025', 'Gobelins', '毕业作品', '2D', '法国']
+  },
+  {
+    id: 'gobelins-2025-last-show',
+    title: '最后的演出',
+    titleEn: 'THE FAMOUS LAST SHOW',
+    director: 'GOBELINS 2025届',
+    year: 2025, group: 'gobelins',
+    award: '2025 GOBELINS 毕业作品·5.3万次播放',
+    technique: '2D 手绘', country: '法国', duration: '6:54',
+    description: 'Bruce，一位年轻的戏剧导演，拼命试图排练完美的生日庆典——直到发现"意外"本身就是无法被排除的变量。法式荒诞喜剧，关于控制欲与生活的不可预测性。',
+    vid: 'H85cAk-bLno',
+    tags: ['2025', 'Gobelins', '毕业作品', '2D', '法国', '喜剧']
+  },
+  {
+    id: 'gobelins-2021-louise',
+    title: '露易丝',
+    titleEn: 'LOUISE',
+    director: 'GOBELINS 2021届',
+    year: 2021, group: 'gobelins',
+    award: 'Gobelins 毕业作品·878万次播放',
+    technique: '2D 手绘', country: '法国', duration: '6:17',
+    description: '1895年，巴黎歌剧院芭蕾舞者Louise在演出后匆忙赶回家，却被一个朋友拦下借钱。以1890年代巴黎为背景的精致手绘动画，光影与色彩令人想起印象派画作。Gobelins频道最高播放量作品之一。',
+    vid: '7GjJef2QkQU',
+    tags: ['2024', 'Gobelins', '毕业作品', '2D', '法国', '历史']
+  },
+  {
+    id: 'gobelins-2022-magnifica',
+    title: 'MAGNIFICA / 玛格尼菲卡',
+    titleEn: 'MAGNIFICA',
+    director: 'GOBELINS 2022届',
+    year: 2022, group: 'gobelins',
+    award: 'GOBELINS 2022 毕业作品·117万次播放',
+    technique: '2D 手绘', country: '法国', duration: '6:29',
+    description: '1907年，年轻的哥斯达黎加竖琴师Magnifica在布鲁塞尔皇家音乐学院为音乐会做准备。流畅的线条与温暖的色调，讲述一个关于音乐、归属与梦想的动人故事。',
+    vid: '7YrKFtYLp1s',
+    tags: ['2022', 'Gobelins', '毕业作品', '2D', '法国']
+  },
+  {
+    id: 'bili-wanhuajing',
+    title: '万华镜',
+    titleEn: 'Kaleidoscope',
+    director: '赶稿人 (清华美院)',
+    year: 2021, group: 'other',
+    award: '🏆 2021小宇宙计划·清华美院毕设·B站48万播放',
+    technique: '2D 手绘', country: '中国', duration: '3:01',
+    description: '清华大学美术学院2021届动画毕设。以中华五十六个民族的形象、服饰等元素，描绘中华民族文化多样性与民族团结。惊艳的视觉设计与流畅的动画，全网超千万点击。',
+    bvid: 'BV1Ev411T7HD',
+    bcover: 'https://i0.hdslb.com/bfs/archive/08e73240aa6e95be022192ec2945f4fd129a822c.jpg',
+    tags: ['2021', 'B站', '清华美院', '小宇宙计划', '国风']
+  },
+  {
+    id: 'bili-zigui',
+    title: '子归',
+    titleEn: 'Return',
+    director: '吃瓣儿梨冷静冷静',
+    year: 2021, group: 'other',
+    award: '2021届动画毕设·中国风·B站66.9万播放',
+    technique: '2D 手绘', country: '中国', duration: '7:38',
+    description: '2021届动画毕设。用中国风的手绘动画讲述了一个关于历史与家园的故事——将圆明园兔首拟人化，表达00后心中的家国情怀。画面唯美，叙事感人。',
+    bvid: 'BV17f4y1b7Zz',
+    bcover: 'https://i1.hdslb.com/bfs/archive/8e84bba28e2cd1ab87c7fa9c87439c943fc7c5a3.jpg',
+    tags: ['2021', 'B站', '中国风', '毕设', '国风']
+  },
+  {
+    id: 'bili-grandma-secret',
+    title: '奶奶的秘密',
+    titleEn: "Grandma's Secret",
+    director: '粥和舟舟 (天津美术学院)',
+    year: 2023, group: 'other',
+    award: '🏆 第五届寻光小宇宙奖·天津美院毕设·B站79万播放',
+    technique: '2D 手绘', country: '中国', duration: '3:35',
+    description: '天津美术学院2023届动画毕设，第五届寻光小宇宙奖作品。每个奶奶都有属于自己的秘密——关于亲情、记忆与传承的温暖故事。79万B站播放。',
+    bvid: 'BV1WP411v7AF',
+    bcover: 'https://i0.hdslb.com/bfs/archive/7ce25fd35b05581877fb95e192b905ceba565e1a.jpg',
+    tags: ['2023', 'B站', '寻光小宇宙奖', '天美', '亲情']
+  },
+  {
+    id: 'bili-return-home',
+    title: '返屋企',
+    titleEn: 'Return Home',
+    director: '来氏福尔',
+    year: 2022, group: 'other',
+    award: '🏆 2022小宇宙计划·B站18万播放',
+    technique: '2D 手绘', country: '中国', duration: '6:34',
+    description: '2022小宇宙计划（寻光奖前身）毕设动画短片。\"返屋企\"在粤语中意为\"回家\"——漂泊在外的游子踏上归途的故事。温暖的画面与触动心弦的叙事。',
+    bvid: 'BV17T411G72Z',
+    bcover: 'https://i0.hdslb.com/bfs/archive/c9302d535e0794c9f50c930bcb656ea392629090.jpg',
+    tags: ['2022', 'B站', '小宇宙计划', '毕设', '治愈']
+  },
+  {
+    id: 'bili-sweater',
+    title: '毛衣',
+    titleEn: 'Sweater',
+    director: 'Shanl1ang',
+    year: 2023, group: 'other',
+    award: '🏆 第五届寻光小宇宙奖·B站4万播放',
+    technique: '2D 手绘', country: '中国', duration: '5:10',
+    description: '第五届寻光小宇宙奖毕设动画短片。一件手织毛衣串起了三代人的情感记忆——从外婆到母亲到我，每一针每一线都是爱的传承。温暖的画风与细腻的情感叙事。',
+    bvid: 'BV1Yu411h7mY',
+    bcover: 'https://i2.hdslb.com/bfs/archive/1ee37dc274e67f692e2f7116308b5f9633a0a067.jpg',
+    tags: ['2023', 'B站', '寻光小宇宙奖', '毕设', '亲情']
+  },
+  {
+    id: 'nfb-2025-pearls',
+    title: '哭珍珠的女孩',
+    titleEn: 'The Girl Who Cried Pearls',
+    director: 'Chris Lavis, Maciek Szczerbowski (NFB)',
+    year: 2025, group: 'festival',
+    award: '🏆 2026 奥斯卡·最佳动画短片提名',
+    technique: '定格动画 (stop-motion)', country: '加拿大', duration: '—',
+    description: '加拿大国家电影局(NFB)制作。一个令人心碎的现代寓言——当一个女孩的悲伤化为珍珠，爱她的男孩试图拯救她。定格动画的精湛工艺与黑暗童话的叙事力量相结合。452万次播放。',
+    vid: 'rJyIL3li6go',
+    tags: ['2025', '奥斯卡', '提名', '定格', 'NFB', '加拿大']
+  },
+
+  // ==========================================================
+  // 🎓 东京造形大学（Tokyo Zokei University）
+  // ==========================================================
+  {
+    id: 'zokei-2023-ki-odori',
+    title: '己踊り',
+    titleEn: 'KI-ODORI',
+    director: 'ONNKAI',
+    year: 2023, group: 'zokei',
+    award: '2023 东京造形大学毕业作品',
+    technique: '2D 手绘', country: '日本', duration: '5:01',
+    description: '东京造形大学2023届毕业作品。以传统日本舞蹈"踊り"为灵感，结合现代手绘风格，呈现了一场充满生命力的个人之舞。节奏感与线条之美相得益彰。',
+    vid: 'tVR_tg5nGYA',
+    tags: ['2023', '东京造形大学', 'Zokei', '毕业作品', '日本', '2D']
+  },
+  {
+    id: 'zokei-2024-hallcinetion',
+    title: 'Hallcinetion / 幻觉',
+    titleEn: 'Hallcinetion',
+    director: 'GAO XINGJIAN',
+    year: 2024, group: 'zokei',
+    award: '🏆 东京造形大学·学长奖励奖',
+    technique: '3D CGI', country: '日本', duration: '10:21',
+    description: '2024年东京造形大学毕业作品，荣获学长奖励奖。以超现实的3D CGI构建了一个幻觉与现实交织的世界，在迷幻的视觉语言中探讨感知的边界。',
+    vid: 'MSY20ntBmSA',
+    tags: ['2024', '东京造形大学', 'Zokei', '毕业作品', 'CGI', '日本']
+  },
+
+  // ==========================================================
+  // 📺 Bilibili 短片精选（含封面）
+  // ==========================================================
+  {
+    id: 'bili-the-sky-was-candy',
+    title: '天空如同糖果般绚烂',
+    titleEn: 'The sky was candy (2025)',
+    director: '电影基石 推荐',
+    year: 2026, group: 'festival',
+    award: 'B站精选短片',
+    technique: '2D 手绘', country: '—', duration: '—',
+    description: '来自B站UP主"电影基石"推荐的优秀动画短片。天空如同糖果般绚烂——一个关于色彩与想象的视觉诗篇。',
+    bvid: 'BV146FszAEwn',
+    bcover: 'https://i1.hdslb.com/bfs/archive/4d2f9b76f6e107458ed670745cd03dba43e851bb.jpg',
+    tags: ['2025', 'B站', '电影基石']
+  },
+  {
+    id: 'bili-ete96',
+    title: '九六年夏天',
+    titleEn: 'Été 96 (2023)',
+    director: '电影基石 推荐',
+    year: 2023, group: 'festival',
+    award: '🏆 法国凯撒电影奖·最佳动画短片',
+    technique: '2D 手绘', country: '法国', duration: '—',
+    description: '2023年法国凯撒电影奖最佳动画短片。夏天、青春、初恋的味道——90年代法国郊区的夏日记忆，在怀旧的色调中缓缓展开。2.9万B站播放。',
+    bvid: 'BV1QN4mzBEnH',
+    bcover: 'https://i2.hdslb.com/bfs/archive/c41dc8ae754606102cd64ae497ea92fb8de4e8c5.jpg',
+    tags: ['2024', 'B站', '电影基石', '法国', '凯撒奖']
+  },
+  {
+    id: 'bili-yummy',
+    title: '美味',
+    titleEn: 'Yummy (2024)',
+    director: '电影基石 推荐',
+    year: 2024, group: 'festival',
+    award: '🏆 里加电影节·最佳动画短片',
+    technique: '2D 手绘', country: '—', duration: '—',
+    description: '2024年里加电影节最佳动画短片。一部关于"吃"的黑色幽默动画——食欲背后隐藏着更深的欲望与人性。',
+    bvid: 'BV1rynEzoELb',
+    bcover: 'https://i1.hdslb.com/bfs/archive/595ddf0d295b3ab48fb8240526427e3e1ca041eb.jpg',
+    tags: ['2024', 'B站', '电影基石', '里加电影节']
+  },
+  {
+    id: 'bili-summer-dream',
+    title: '夏梦回',
+    titleEn: '夏梦回 (2023)',
+    director: '电影基石 推荐',
+    year: 2023, group: 'festival',
+    award: '🏆 金马奖·最佳动画短片',
+    technique: '2D 手绘', country: '台湾', duration: '—',
+    description: '2023年金马奖最佳动画短片。夏日的梦境中，记忆与现实的边界逐渐模糊——一个关于乡愁与时光的故事。',
+    bvid: 'BV1H9yhYVEFL',
+    bcover: 'https://i1.hdslb.com/bfs/archive/cbc0203f5b0cc885a6c714b405378dfc5eb55ac9.jpg',
+    tags: ['2024', 'B站', '电影基石', '金马奖']
+  },
+  {
+    id: 'bili-super-generic',
+    title: '超级普通',
+    titleEn: 'Super Generic',
+    director: 'Ringling College',
+    year: 2020, group: 'other',
+    award: '🏆 学生奥斯卡入围·B站29万播放',
+    technique: '3D CGI', country: '美国', duration: '3:20',
+    description: 'Ringling College计算机动画毕设。一个"超级普通"的人在一个追求"不普通"的世界中的荒诞处境。所有动画人看完都哭着大喊真实——关于创意行业中的自我怀疑与身份焦虑。',
+    bvid: 'BV1XA411n7KQ',
+    bcover: 'https://i2.hdslb.com/bfs/archive/d5c1373348321d3699ef26a92e96bfa7c33a4096.jpg',
+    tags: ['2024', 'B站', 'Ringling', '学生奥斯卡', '毕设']
+  },
+  {
+    id: 'bili-revival-dance',
+    title: '复苏之舞',
+    titleEn: 'Revival Dance',
+    director: '兽小亥',
+    year: 2021, group: 'other',
+    award: '🏆 学生奥斯卡提名·B站76万播放',
+    technique: '3D CGI', country: '中国', duration: '3:48',
+    description: '学生奥斯卡提名动画短片。一段关于复苏与重生的舞蹈——在废墟之上，一个灵魂以舞姿唤醒沉睡的世界。视觉冲击力极强的CG动画。',
+    bvid: 'BV1q34y1X7EH',
+    bcover: 'https://i0.hdslb.com/bfs/archive/92331a0c4dddd616663489a87d8f2d51cc58e079.jpg',
+    tags: ['2024', 'B站', '学生奥斯卡', 'CGI', '中国']
+  },
+  {
+    id: 'bili-lets-eat',
+    title: "Let's Eat / 一起吃饭吧",
+    titleEn: "Let's Eat",
+    director: '小希浮水8 推荐',
+    year: 2022, group: 'festival',
+    award: '🏆 获奖动画短片·B站2.7万播放',
+    technique: '2D 手绘', country: '—', duration: '8:31',
+    description: '一部关于亚裔家庭与食物的感人获奖动画短片。餐桌上的每一道菜都承载着说不出口的爱——当亲人离去后，只有味道还记得。背景音乐极其治愈。',
+    bvid: 'BV18P4y1M7NE',
+    bcover: 'https://i0.hdslb.com/bfs/archive/bfef8ff53a351fda2420ef1d58d13b861dca788a.jpg',
+    tags: ['2024', 'B站', '获奖', '家庭', '治愈']
+  },
+  {
+    id: 'bili-elevator-man',
+    title: 'ELEVATOR MAN / 电梯人',
+    titleEn: 'ELEVATOR MAN 2022',
+    director: 'GGAC',
+    year: 2024, group: 'festival',
+    award: 'B站30.6万播放·全网爆款',
+    technique: '2D 手绘 / 数字动画', country: '—', duration: '2:26',
+    description: '这么有创意的动画居然是粉丝做的？电梯人的日常——在狭小空间里上演的无限创意。每一个楼层都是一个新的世界，脑洞大开的现象级爆款短片。',
+    bvid: 'BV1qt421p7Ck',
+    bcover: 'https://i1.hdslb.com/bfs/archive/a219dfd0de7bbb430fc055ed24859db2c8189cb7.jpg',
+    tags: ['2024', 'B站', '创意', '爆款']
+  },
+  {
+    id: 'bili-2.3x2.6x3.2',
+    title: '2.3x2.6x3.2',
+    titleEn: '2.3x2.6x3.2',
+    director: 'Jackie动画 (RCA)',
+    year: 2023, group: 'festival',
+    award: '🏆 MONSTRA葡萄牙动画节·最佳学生动画奖',
+    technique: '实验动画', country: '英国', duration: '3:48',
+    description: 'RCA（皇家艺术学院）研一作品。以空间尺寸为名的实验动画，入围爱丁堡国际电影节等多个国际动画节。在有限的空间维度中探索无限的叙事可能。',
+    bvid: 'BV1iL411d7vR',
+    bcover: 'https://i0.hdslb.com/bfs/archive/949fb84bcd93c14226c2e398942c68fe976e399e.jpg',
+    tags: ['2024', 'B站', 'RCA', '实验', '获奖']
+  },
+  {
+    id: 'bili-flooding',
+    title: 'Flooding 潮水',
+    titleEn: 'Flooding',
+    director: 'CalArts 2023届·鲈形目',
+    year: 2023, group: 'calarts',
+    award: 'CalArts 2023 逐帧动画·B站12.2万播放',
+    technique: '2D 手绘', country: '美国', duration: '4:12',
+    description: 'CalArts 2023届角色动画毕业作品。情绪的潮水涌来——以流动的手绘线条完美呈现内心世界的起伏。逐帧动画的每一帧都充满了手绘的质感和温度。',
+    bvid: 'BV1Cu4y1i7PD',
+    bcover: 'https://i2.hdslb.com/bfs/archive/9692fa2a0a7d2512f510e75b676e3002a22ca02d.jpg',
+    tags: ['2024', 'B站', 'CalArts', '毕业作品', '2D']
+  },
+  {
+    id: 'bili-mud-life',
+    title: '害！这烂泥一样的人生',
+    titleEn: 'Mud Life',
+    director: '小破站短视频精选 推荐',
+    year: 2022, group: 'festival',
+    award: '🏆 豆瓣8.6·获奖隐喻动画·B站18.6万播放',
+    technique: '2D 手绘', country: '—', duration: '6:43',
+    description: '豆瓣评分8.6的获奖隐喻动画。一个在泥潭中挣扎的人，试图把周围的环境整理干净，却越陷越深。直到他学会与泥巴共处——关于接纳不完美的自己。',
+    bvid: 'BV1Am4y1S7tm',
+    bcover: 'https://i2.hdslb.com/bfs/archive/27a374ebf1798f8c52de4d688c8050918c7f548e.jpg',
+    tags: ['2024', 'B站', '获奖', '隐喻', '豆瓣高分']
+  },
+  {
+    id: 'bili-kite-ground',
+    title: '地风筝',
+    titleEn: 'Kite of the Earth',
+    director: '王大力村长 等 (北京电影学院)',
+    year: 2024, group: 'other',
+    award: '🏆 第五届寻光小宇宙奖·B站2.1万播放',
+    technique: '2D 手绘', country: '中国', duration: '10:38',
+    description: '北京电影学院联合创作。一纸岁月情书——老爷爷对偏瘫的老奶奶不离不弃，为让她开心而亲手做了一只风筝。温暖与希望献给所有向往自由的人们。北电动画学院、北斗企鹅工作室联合出品。',
+    bvid: 'BV1sx4y1t7ZB',
+    bcover: 'https://i2.hdslb.com/bfs/archive/ab2eabcdc6748069bc6972037682c3c53bf88087.jpg',
+    tags: ['2024', 'B站', '北电', '毕设', '寻光小宇宙奖']
+  },
+  {
+    id: 'bili-child',
+    title: '小孩儿',
+    titleEn: 'The Kid',
+    director: '2194_ (清华美院)',
+    year: 2021, group: 'other',
+    award: '清华美院2021届动画毕设·B站109万播放',
+    technique: '2D 手绘', country: '中国', duration: '5:50',
+    description: '清华大学美术学院2021届本科动画毕设。家里什么时候多出一个小孩儿来？她离开后，我才开始想她。或许每个人都曾有过这样一个"小孩儿"陪伴——关于童年回忆与成长的温暖故事。',
+    bvid: 'BV1FL411H7bm',
+    bcover: 'https://i2.hdslb.com/bfs/archive/681809c723832ea3647c000fe4873836361df7a6.jpg',
+    tags: ['2024', 'B站', '清华美院', '毕设', '治愈']
+  },
+  {
+    id: 'bili-if-i-were-hero',
+    title: '如果我是英雄',
+    titleEn: 'If I Were a Hero',
+    director: '沐尘侃剧 推荐',
+    year: 2019, group: 'festival',
+    award: '🏆 入围2018奥斯卡最佳动画奖·安妮奖·B站110万播放',
+    technique: '2D 手绘', country: '中国', duration: '7:24',
+    description: '入围2018奥斯卡最佳动画奖的中国动画。一个有英雄梦的男孩与一个受欺凌的女孩成为朋友。看似讲校园霸凌，实则希望每个人都能成为别人的英雄。第45届动画安妮奖入围作品。',
+    bvid: 'BV1V4411Y7VF',
+    bcover: 'https://i0.hdslb.com/bfs/archive/147d754c2f709c35cb3467ebb62e26a3587dbc3a.jpg',
+    tags: ['2024', 'B站', '奥斯卡', '安妮奖', '中国']
+  },
+  {
+    id: 'bili-who-are-you',
+    title: '你是谁？',
+    titleEn: '¿Y ud quién es?',
+    director: 'Julio Pot',
+    year: 2019, group: 'festival',
+    award: '🏆 智利获奖动画短片',
+    technique: '2D 手绘', country: '智利', duration: '13 min',
+    description: '智利动画短片。一个关于身份与记忆的故事——当你不确定自己是谁的时候，世界会变成什么样子？2019年墨西哥上映，IMDB: tt12762898。',
+    vid: 'GWGbOjUDkU',
+    bvid: 'BV1B34y167mE',
+    bcover: 'https://i1.hdslb.com/bfs/archive/5cceb813e700be935a755ceba8386bd08acd1033.jpg',
+    tags: ['2024', 'B站', 'YouTube', '智利', '获奖']
+  },
+  {
+    id: 'bili-zhong-caa-2025',
+    title: '冢',
+    titleEn: 'Zhong (2025)',
+    director: '楠子 / 中国美术学院 2025届',
+    year: 2025, group: 'other',
+    award: '🏆 第七届寻光小宇宙奖·B站41.2万播放',
+    technique: '2D 手绘', country: '中国', duration: '6:24',
+    description: '中国美术学院2025届动画毕设，第七届寻光小宇宙奖参赛作品。围绕亲情与家庭议题展开的手绘短片，情感浓烈，评论区直呼"泪目"。B站41.2万播放、5万点赞的国产毕设佳作。',
+    bvid: 'BV1EDGgzGEo6',
+    bcover: 'https://i1.hdslb.com/bfs/archive/b2590303c4fc0502caeb64f08d515f9d8dcc3a5a.jpg',
+    tags: ['2025', 'B站', '寻光小宇宙奖', '中国美院', '毕设', '2D']
+  },
+
+  // ==========================================================
+  // 📕 小红书渠道（用户提供链接，SSR管线已核验）
+  // ==========================================================
+  {
+    id: 'xhs-cogito-wonderland',
+    title: 'Cogito Wonderland',
+    titleEn: 'Cogito Wonderland（大丈夫だよ） (2017)',
+    director: '铃木沙织 / 东京艺术大学',
+    year: 2017, group: 'geidai',
+    award: '东京艺术大学映像研究科2017年毕业作品·山村浩二制片',
+    technique: '实验动画', country: '日本', duration: '7:00',
+    description: '东京艺术大学映像研究科动画专业2017年毕业作品，由《头山》导演山村浩二担任制片。一则关于"不拘一格生活之人"的寓言：与所有人相遇的"我"，正走下忧郁之人的阶梯，被自己掀起的波涛所淹没——"我，我是谁？"实验性影像风格，小红书「实验影像bot」发布。',
+    xhs: 'https://www.xiaohongshu.com/explore/6a35941a000000000802408d?xsec_token=CB-GF5Qg-8UJqA1B3s16YQCBqSyA8bJ9WWdm-M7HVVoJE%3D&xsec_source=app_share',
+    },
+
+    // ==========================================================
+    // 🆕 2026-07 新增（5部·多渠道·链接已逐一核验）
+    // ==========================================================
+    {
+      id: 'bili-three-sisters',
+      title: '三姐妹',
+      titleEn: 'The Three Sisters (2024)',
+      director: 'typacm 搬运',
+      year: 2024, group: 'festival',
+      award: '🏆 第97届奥斯卡·最佳动画短片短名单',
+      technique: '2D 手绘', country: '法国', duration: '14:32',
+      description: '三姐妹隐居在一座偏远的小岛上，各自拥有一间小房子。一天机缘巧合之下她们出租了其中一间——这个决定打破了平静的生活，也撕开了姐妹间深藏多年的情感裂缝。2024年奥斯卡短名单入选作品，typacm搬运，B站4.8万播放。',
+      bvid: 'BV1TtrWB2EhF',
+      bcover: 'https://i0.hdslb.com/bfs/archive/3f81cae32f1d53dcdce4ce821f92af1bfacf0917.jpg',
+      tags: ['2024', '奥斯卡', '短名单', '法国', 'typacm']
+    },
+    {
+      id: 'bili-cardboard',
+      title: 'Cardboard / 纸箱宇宙',
+      titleEn: 'Cardboard',
+      director: 'J.P. Vine (前皮克斯故事板艺术家/Locksmith Animation)',
+      year: 2025, group: 'festival',
+      award: '🏆 2026年奥斯卡·最佳动画短片入围·昂西动画节参展',
+      technique: '3D CGI', country: '英国', duration: '8:16',
+      description: '一位单亲猪爸爸带着小猪们搬到老旧露营拖车区，生活虽困难，但孩子们用纸箱和水枪打造出自己的科幻宇宙。由曾任职皮克斯与阿德曼的J.P. Vine执导，《天兵阿荣》团队Locksmith Animation制作。昂西2025参展，2026奥斯卡入围。B站30.9万播放。',
+      bvid: 'BV1uw6TBiEbB',
+      bcover: 'https://i1.hdslb.com/bfs/archive/a4dd7d6f0fe4475c9761684b6ebcd93700b91244.jpg',
+      tags: ['2025', '奥斯卡', '入围', 'CGI', '英国', '皮克斯']
+    },
+    {
+      id: 'bili-windup',
+      title: 'Windup / 发条',
+      titleEn: 'WiNDUP',
+      director: 'Yibing Jiang / Unity',
+      year: 2021, group: 'festival',
+      award: '🏆 获奖动画短片·Unity出品·B站8.3万播放',
+      technique: '3D CGI', country: '美国', duration: '9:56',
+      description: 'Unity出品、Yibing Jiang执导的获奖3D动画短片。讲述一位父亲竭尽全力想要与昏迷的女儿重新建立联系——当发条逐渐走完，真正的动力来自于内心深处爱与希望的力量。精致3D画面与感人叙事交织。',
+      bvid: 'BV1z6Nze2EvY',
+      bcover: 'https://i1.hdslb.com/bfs/archive/144ce7efeeb5d7f67b8e8d100a791ee64678b0ed.jpg',
+      tags: ['2021', 'CGI', 'Unity', '获奖', '温情']
+    },
+    {
+      id: 'bili-boxballet',
+      title: 'Boxballet / 拳击芭蕾',
+      titleEn: 'Boxballet',
+      director: 'Anton Dyakov',
+      year: 2021, group: 'festival',
+      award: '🏆 第94届奥斯卡·最佳动画短片提名',
+      technique: '2D 手绘', country: '俄罗斯', duration: '14:04',
+      description: '战斗民族的硬核浪漫——拳击手与芭蕾舞者的相遇，看似水火不容的两人却在彼此身上找到了意想不到的共鸣。以刚柔并济的手绘画面讲述了一个关于爱与平衡的动人故事。第94届奥斯卡最佳动画短片提名。B站11万播放。',
+      bvid: 'BV1BhA9zkE1t',
+      bcover: 'https://i0.hdslb.com/bfs/archive/db3e12bf6afb5d44f0da0de8518b07c2f22f2ce2.jpg',
+      tags: ['2021', '奥斯卡', '提名', '俄罗斯', '2D']
+    },
+    {
+      id: 'youtube-flying-sailor',
+      title: '飞翔的水手',
+      titleEn: 'The Flying Sailor',
+      director: 'Amanda Forbis & Wendy Tilby (NFB Canada)',
+      year: 2022, group: 'festival',
+      award: '🏆 第95届奥斯卡·最佳动画短片提名',
+      technique: '2D 手绘 / 实验动画', country: '加拿大', duration: '7:55',
+      description: '1917年哈利法克斯大爆炸——两艘船在港口相撞，一名路过的水手被气浪抛向空中。在他飞行的瞬间，一生在眼前闪过。加拿大国家电影局(NFB)出品，第95届奥斯卡最佳动画短片提名。The New Yorker官方放映厅频道收录。',
+      vid: '4Rj3FG8vFtk',
+      tags: ['2022', '奥斯卡', '提名', 'NFB', '加拿大']
+    },
+  // ==========================================================
+  // 📥 用户新增（2026-07-19）
+  // ==========================================================
+  {
+    id: 'added-b71',
+    title: 'RINGING CITY (今津 良樹)',
+    titleEn: 'RINGING CITY (今津 良樹)',
+    director: '今津 良樹 / 东京艺术大学',
+    year: 2017, group: 'geidai',
+    technique: '实验动画',
+    country: '日本',
+    duration: '3:59',
+    description: '東京藝術大学大学院映像研究科アニメーション専攻一年次作品。監督：今津 良樹、プロデューサー：山村浩二。情報過多な大都会。無関心に潜む、自覚のない好奇心が喧騒のループへと誘い込む。',
+    bvid: 'BV1PY4y1V7YR',
+    bcover: 'https://i2.hdslb.com/bfs/archive/9e133d8e7c5dd40e42844457c639437aabe6b46a.jpg',
+    tags: ['2017', '东京艺大', 'B站', '实验动画']
+  },
+  ];
+
+// ==========================================================
+// 分类定义（顺序即筛选栏显示顺序）
+// china 为特殊虚拟组：按 country 字段过滤，不依赖 group
+// ==========================================================
+const GROUPS = [
+  { key: 'all',      label: '全部' },
+  { key: 'festival', label: '🏆 影展获奖', badge: '<span class="badge badge-gold">🏆 影展</span>' },
+  { key: 'gobelins', label: '🎬 Gobelins', badge: '<span class="badge badge-green">Gobelins</span>' },
+  { key: 'geidai',   label: '🎬 东京艺大', badge: '<span class="badge badge-pink">東京藝大</span>' },
+  { key: 'tama',     label: '🎬 多摩美术', badge: '<span class="badge badge-pink">多摩美術</span>' },
+  { key: 'seika',    label: '🎬 京都精华', badge: '<span class="badge badge-pink">京都精華</span>' },
+  { key: 'zokei',    label: '🎬 东造形大', badge: '<span class="badge badge-pink">東造形大</span>' },
+  { key: 'calarts',  label: '🎬 CalArts',  badge: '<span class="badge badge-blue">CalArts</span>' },
+  { key: 'other',    label: '🎬 其他院校', badge: '<span class="badge badge-purple">其他</span>' },
+  { key: 'china',    label: '🇨🇳 国产',    badge: '<span class="badge badge-rose">🇨🇳 国产</span>' },
+];
+
+const isChina = w => /中国|台湾/.test(w.country || '');
+const ADD_WORKS_KEY = 'hermes_anim_added';
+const FAVS_KEY = 'hermes_anim_favs';
+function getFavs() {
+  try { return JSON.parse(localStorage.getItem(FAVS_KEY)) || []; }
+  catch { return []; }
+}
+function isFav(id) { return getFavs().includes(id); }
+function toggleFav(id) {
+  let favs = getFavs(); const idx = favs.indexOf(id);
+  if (idx > -1) favs.splice(idx, 1); else favs.push(id);
+  localStorage.setItem(FAVS_KEY, JSON.stringify(favs));
+  return favs.includes(id);
+}
+function favCount() { return getAllWorks().filter(w => isFav(w.id)).length; }
+function getAddedWorks() {
+  try { return JSON.parse(localStorage.getItem(ADD_WORKS_KEY)) || []; }
+  catch { return []; }
+}
+function getAllWorks() {
+  const builtin = WORKS;
+  const added = getAddedWorks();
+  // 去重：如果 added 中的 bvid/vid 已存在于 builtin，跳过
+  const builtinIds = new Set(builtin.map(w => w.bvid || w.vid).filter(Boolean));
+  const filtered = added.filter(w => !builtinIds.has(w.bvid || w.vid));
+  return [...builtin, ...filtered];
+}
+
+function groupCount(key) {
+  const all = getAllWorks();
+  if (key === 'all') return all.length;
+  if (key === 'china') return all.filter(isChina).length;
+  return all.filter(w => w.group === key).length;
+}
+
+let currentFestival = 'all';
+let currentYear = 'all';
+let currentFav = false;
+let searchQuery = '';
+
+function getWorks() {
+  let list = getAllWorks();
+  if (currentFestival === 'china') {
+    list = list.filter(isChina);
+  } else if (currentFestival !== 'all') {
+    list = list.filter(w => w.group === currentFestival);
+  }
+  if (currentYear !== 'all') {
+    list = list.filter(w => w.year === parseInt(currentYear));
+  }
+  if (searchQuery.trim()) {
+    const q = searchQuery.trim().toLowerCase();
+    list = list.filter(w =>
+      w.title.toLowerCase().includes(q) || w.titleEn.toLowerCase().includes(q) ||
+      w.director.toLowerCase().includes(q) || (w.award || '').toLowerCase().includes(q) ||
+      (w.country || '').toLowerCase().includes(q) || (w.technique || '').toLowerCase().includes(q) ||
+      w.tags.some(t => t.toLowerCase().includes(q))
+    );
+  }
+  if (currentFav) {
+    list = list.filter(w => isFav(w.id));
+  }
+  list.sort((a, b) => b.year - a.year || a.title.localeCompare(b.title));
+  return list;
+}
+
+function getBadges(work) {
+  const b = [];
+  b.push(`<span class="badge badge-year">${work.year}</span>`);
+  if (isChina(work)) {
+    b.push('<span class="badge badge-rose">🇨🇳 国产</span>');
+  } else {
+    const g = GROUPS.find(g => g.key === work.group);
+    b.push(g && g.badge ? g.badge : '<span class="badge badge-purple">其他</span>');
+  }
+  if (work.award && work.award.includes('🏆')) {
+    b.push(`<span class="badge badge-gold">★ 获奖</span>`);
+  }
+  return b.join('');
+}
+
+// 动态生成筛选按钮（含每类数量），并绑定事件
+function buildFilters() {
+  const gf = document.getElementById('festivalFilters');
+  gf.innerHTML = GROUPS.map(g => {
+    const n = groupCount(g.key);
+    if (g.key !== 'all' && n === 0) return '';
+    return `<button class="filter-chip${g.key === 'all' ? ' active' : ''}" data-festival="${g.key}">${g.label}<span class="chip-count">${n}</span></button>`;
+  }).join('');
+
+  const years = [...new Set(getAllWorks().map(w => w.year))].sort((a, b) => b - a);
+  const yf = document.getElementById('yearFilters');
+  const allWorks = getAllWorks();
+  yf.innerHTML = `<button class="filter-chip active-year" data-year="all">全部<span class="chip-count">${allWorks.length}</span></button>` +
+    years.map(y => `<button class="filter-chip" data-year="${y}">${y}<span class="chip-count">${getAllWorks().filter(w => w.year === y).length}</span></button>`).join('');
+
+  gf.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      gf.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFestival = btn.dataset.festival;
+      render();
+    });
+  });
+  yf.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      yf.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active-year'));
+      btn.classList.add('active-year');
+      currentYear = btn.dataset.year;
+      render();
+    });
+  });
+}
+
+function render() {
+  const grid = document.getElementById('workGrid');
+  const works = getWorks();
+  document.getElementById('resultCount').innerHTML = `共 <b>${works.length}</b> 部作品`;
+  if (works.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><h3>没有找到匹配的作品</h3></div>`;
+  } else {
+  grid.innerHTML = works.map(w => {
+    const meta = [];
+    if (w.director && w.director !== '—' && w.director.length < 35) meta.push(`<span>🎬 ${w.director}</span>`);
+    if (w.country && w.country !== '—' && !w.country.includes('/')) meta.push(`<span>🌍 ${w.country}</span>`);
+    if (w.duration && w.duration !== '—') meta.push(`<span>⏱ ${w.duration}</span>`);
+
+    const img = w.bvid
+      ? `<img src="${w.bcover || ''}" alt="${w.title}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<div style=position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#1a1a3a,#2a1a3a);color:var(--accent-teal)>📺 B站</div>'">`
+      : (w.vid
+        ? `<img src="https://img.youtube.com/vi/${w.vid}/hqdefault.jpg" alt="${w.title}" loading="lazy" onerror="this.style.display='none'">`
+        : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#2a1a2a,#1a1a3a);color:var(--accent-rose)">📕 小红书</div>`);
+
+    return `<div class="card" data-id="${w.id}" onclick="openModal('${w.id}')">
+      <div class="card-thumb">${img}<div class="card-badges">${getBadges(w)}</div><button class="fav-btn${isFav(w.id)?' active':''}" data-favid="${w.id}" onclick="event.stopPropagation();_toggleFav('${w.id}')">${isFav(w.id)?'❤️':'♡'}</button></div>
+      <div class="card-body">
+        <div class="card-title">${w.title}</div>
+        <div class="card-title-en">${w.titleEn}</div>
+        ${meta.length ? `<div class="card-meta">${meta.join('')}</div>` : ''}
+        <div class="card-desc">${(w.description || '').slice(0, 100)}…</div>
+      </div>
+    </div>`;
+  }).join('');
+  }
+  document.getElementById('totalWorks').textContent = getAllWorks().length;
+  const sets = new Set(getAllWorks().map(w => w.group));
+  document.getElementById('totalSchools').textContent = sets.size;
+  const years = getAllWorks().map(w => w.year);
+  document.getElementById('totalYears').textContent = Math.max(...years) - Math.min(...years) + 1;
+  document.getElementById('footerCount').textContent = getAllWorks().length;
+  document.getElementById('favCount').textContent = favCount();
+}
+
+function openModal(id) {
+  const work = getAllWorks().find(w => w.id === id);
+  if (!work) return;
+  const overlay = document.getElementById('modalOverlay');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const banner = document.getElementById('modalBanner');
+  if (work.bcover) {
+    banner.style.backgroundImage = `url(${work.bcover})`;
+    banner.style.backgroundSize = 'cover';
+    banner.style.backgroundPosition = 'center';
+  } else if (work.vid) {
+    banner.style.backgroundImage = `url(https://img.youtube.com/vi/${work.vid}/hqdefault.jpg)`;
+    banner.style.backgroundSize = 'cover';
+    banner.style.backgroundPosition = 'center';
+  } else {
+    banner.style.backgroundImage = '';
+    banner.style.background = 'linear-gradient(135deg, #1a1a3a 0%, #2a1a3a 50%, #1a1a2a 100%)';
+  }
+  banner.querySelector('.modal-banner-overlay').style.display = 'block';
+  document.getElementById('modalBadges').innerHTML = getBadges(work);
+
+  document.getElementById('modalTitle').textContent = work.title;
+  document.getElementById('modalTitleEn').textContent = work.titleEn;
+  const info = [];
+  const addInfo = (l, v) => { if (v && v !== '—' && v !== '') info.push(`<div class="modal-info-item"><label>${l}</label><span>${v}</span></div>`); };
+  addInfo('导演', work.director);
+  addInfo('年份', work.year);
+  addInfo('国家', work.country);
+  addInfo('奖项', work.award);
+  addInfo('技法', work.technique);
+  addInfo('时长', work.duration);
+  document.getElementById('modalInfo').innerHTML = info.join('');
+  document.getElementById('modalDesc').textContent = work.description || '';
+
+  const acts = document.getElementById('modalActions');
+  acts.innerHTML = '';
+  if (work.bvid) {
+    const btn = document.createElement('a');
+    btn.href = `https://www.bilibili.com/video/${work.bvid}/`;
+    btn.target = '_blank'; btn.rel = 'noopener noreferrer';
+    btn.className = 'btn btn-primary';
+    btn.textContent = '▶ B站 观看';
+    acts.appendChild(btn);
+  }
+  if (work.vid) {
+    const btn = document.createElement('a');
+    btn.href = `https://www.youtube.com/watch?v=${work.vid}`;
+    btn.target = '_blank'; btn.rel = 'noopener noreferrer';
+    btn.className = work.bvid ? 'btn btn-secondary' : 'btn btn-primary';
+    btn.textContent = '▶ YouTube 观看';
+    acts.appendChild(btn);
+  }
+  if (work.xhs) {
+    const btn = document.createElement('a');
+    btn.href = work.xhs;
+    btn.target = '_blank'; btn.rel = 'noopener noreferrer';
+    btn.className = (work.bvid || work.vid) ? 'btn btn-secondary' : 'btn btn-xhs';
+    btn.textContent = '📕 小红书 观看';
+    acts.appendChild(btn);
+  }
+  // 收藏按钮
+  const favBtn = document.createElement('button');
+  const isFaved = isFav(work.id);
+  favBtn.className = `modal-fav-btn${isFaved ? ' active' : ''}`;
+  favBtn.innerHTML = isFaved ? '❤️ 已收藏' : '♡ 收藏';
+  favBtn.onclick = () => {
+    const now = toggleFav(work.id);
+    favBtn.classList.toggle('active', now);
+    favBtn.innerHTML = now ? '❤️ 已收藏' : '♡ 收藏';
+    document.getElementById('favCount').textContent = favCount();
+    // Update card button if visible
+    const cardBtn = document.querySelector(`.fav-btn[data-favid="${work.id}"]`);
+    if (cardBtn) {
+      cardBtn.classList.toggle('active', now);
+      cardBtn.textContent = now ? '❤️' : '♡';
+    }
+    if (currentFav && !now) { closeModal(); render(); }
+  };
+  acts.appendChild(favBtn);
+  const cb = document.createElement('button');
+  cb.className = 'btn btn-secondary'; cb.textContent = '关闭';
+  cb.onclick = closeModal; acts.appendChild(cb);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ===== 添加新作品功能 =====
+document.getElementById('addBtn').addEventListener('click', () => {
+  document.getElementById('addModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const sel = document.getElementById('addGroup');
+  sel.innerHTML = GROUPS.filter(g => g.key !== 'all').map(g =>
+    `<option value="${g.key}">${g.label.replace(/<[^>]+>/g,'')}</option>`
+  ).join('');
+  document.getElementById('fetchStatus').textContent = '';
+  document.getElementById('fetchStatus').className = 'fetch-status';
+  document.getElementById('addPreview').style.display = 'none';
+});
+function closeAddModal() {
+  document.getElementById('addModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('addModalClose').addEventListener('click', closeAddModal);
+document.getElementById('addCancelBtn').addEventListener('click', closeAddModal);
+document.getElementById('addModalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
+
+function parseUrl(url) {
+  url = url.trim();
+  const b = url.match(/(?:bilibili\.com\/video\/|b23\.tv\/)(BV[a-zA-Z0-9]+)/i);
+  if (b) return {type:'bilibili',id:b[1]};
+  const y1 = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+  if (y1) return {type:'youtube',id:y1[1]};
+  const y2 = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (y2) return {type:'youtube',id:y2[1]};
+  return null;
+}
+
+let _lastUrl = null;
+document.getElementById('fetchBtn').addEventListener('click', async () => {
+  const url = document.getElementById('addUrl').value.trim();
+  const st = document.getElementById('fetchStatus');
+  if (!url) { st.textContent='请先输入链接'; st.className='fetch-status err'; return; }
+  const p = parseUrl(url);
+  if (!p) { st.textContent='不支持的链接，仅支持 B站 和 YouTube'; st.className='fetch-status err'; return; }
+  _lastUrl = p;
+  st.textContent='正在抓取…'; st.className='fetch-status';
+  document.getElementById('fetchBtn').disabled = true;
+  try {
+    if (p.type==='bilibili') {
+      let v = null;
+      // 优先走本地代理 → 其次走公共 CORS 代理
+      const proxyUrls = [
+        `/api/bilibili?bvid=${p.id}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.bilibili.com/x/web-interface/view?bvid='+p.id)}`,
+      ];
+      for (const url of proxyUrls) {
+        try { const r = await fetch(url); if (!r.ok) continue; const d = await r.json(); if (d.code === 0 && d.data) { v = d.data; break; } } catch(_) { continue; }
+      }
+      if (!v) throw new Error('所有代理均不可用，请手动填写');
+
+      // ---- B站数据填充（智能解析版 v2） ----
+      // 1. 标题深度清洗
+      let rawTitle = v.title.replace(/&#?\w+;/g, m => { const el = document.createElement('span'); el.innerHTML=m; return el.textContent; });
+      // 分类【】内容：奖→award / 学校→group / 技法→technique
+      const bracketItems = [...rawTitle.matchAll(/【([^】]+)】/g)].map(m => m[1]);
+      let awardFromBracket = '', schoolFromBracket = '', techFromBracket = '';
+      for (const item of bracketItems) {
+        if (/[届奖赛展计划大赏]/.test(item)) awardFromBracket = item;
+        else if (/[大学学院学校]/.test(item)) schoolFromBracket = item;
+        else if (/[实验动画2D3DCG手绘定格CGI水彩水墨沙画剪纸ストップモーション]/.test(item)) techFromBracket = item;
+      }
+      // 去掉所有【】和《》，得到干净标题
+      let cleanTitle = rawTitle
+        .replace(/【[^】]+】/g, '')
+        .replace(/《[^》]+》/g, m => m.slice(1, -1)) // 《老涵你什么时候到！》→ 老涵你什么时候到！
+        .replace(/^\s+|\s+$/g, '');
+      // 去掉尾部" - 人名"模式（导演署名）
+      const dirSuffixMatch = cleanTitle.match(/^(.*?)\s*[—–-]\s*([^—–-]{2,8})$/);
+      let dirFromTitleSuffix = '';
+      if (dirSuffixMatch) {
+        cleanTitle = dirSuffixMatch[1].trim();
+        dirFromTitleSuffix = dirSuffixMatch[2].trim();
+      }
+      if (!cleanTitle || cleanTitle.length < 2) cleanTitle = rawTitle;
+      const title = cleanTitle;
+
+      const m = Math.floor(v.duration/60), s = v.duration%60;
+      const dur = `${m}:${String(s).padStart(2,'0')}`;
+      const owner = v.owner?.name || '';
+      const desc = v.desc || '';
+
+      // 2. 年份：标题 > 描述 > pubdate
+      let year = new Date(v.pubdate * 1000).getFullYear();
+      // 标题中任意位置的 4 位数年份（含括号和不带括号）
+      const yearInTitle = rawTitle.match(/[（(]?(\d{4})[年)）]?/);
+      if (yearInTitle) {
+        const ty = parseInt(yearInTitle[1]);
+        if (ty >= 1900 && ty <= 2030) year = ty;
+      }
+      // 描述中的年份关键词
+      const yearInDesc = desc.match(/(?:作品|制作|毕业|上映|年度|年次作品|©)\s*(\d{4})/) || desc.match(/(\d{4})[年]/);
+      if (yearInDesc) {
+        const dy = parseInt(yearInDesc[1]);
+        if (dy >= 1900 && dy <= 2030 && dy !== new Date(v.pubdate * 1000).getFullYear()) year = dy;
+      }
+
+      // 3. 导演：描述提取 → 标题后缀 → 标题括号 → UP主
+      let director = '';
+      // 3a. 描述中"監督：/导演：/Directed by"
+      const dirMatch = desc.match(/[監督导演][：:]\s*([^\n，,。、]+)/) || desc.match(/[Dd]irected by\s+([^\n。.]+)/);
+      if (dirMatch) {
+        director = dirMatch[1].trim();
+      }
+      // 3b. 描述中"xxx 导演名，" 模式（如"土豆搬运 山村浩二，"）
+      if (!director) {
+        const knownDirs = ['山村浩二', '新海誠', '宮崎駿', '高畑勲', '今敏', '細田守', '湯浅政明'];
+        for (const name of knownDirs) {
+          if (desc.includes(name)) { director = name; break; }
+        }
+      }
+      // 3c. 标题后缀" - 导演名"
+      if (!director && dirFromTitleSuffix) {
+        director = dirFromTitleSuffix;
+      }
+      // 3d. 标题括号内的人名
+      if (!director) {
+        const dirInParen = rawTitle.match(/\(([^)]{2,8})\)/);
+        if (dirInParen) director = dirInParen[1];
+      }
+      // 学校后缀（从【】提取）
+      const schoolSuffix = schoolFromBracket ? ` / ${schoolFromBracket}` : '';
+      if (director) {
+        document.getElementById('addDirector').value = director + schoolSuffix;
+      } else if (owner) {
+        document.getElementById('addDirector').value = `${owner}（B站UP主）`;
+      }
+
+      document.getElementById('addTitle').value = title;
+      document.getElementById('addYear').value = year;
+      document.getElementById('addDuration').value = dur;
+      document.getElementById('addDesc').value = desc;
+
+      // 4. 学校→分类映射（扩展版）
+      const SCHOOL_MAP = [
+        { keys: ['东京艺术大学', '東京藝術大学', '东艺大', '東京藝大', 'GEIDAI'], group: 'geidai', label: '东京艺大' },
+        { keys: ['多摩美术大学', '多摩美術大学', '多摩美术'], group: 'tama', label: '多摩美术' },
+        { keys: ['京都精华大学', '京都精華大学', '京都精华'], group: 'seika', label: '京都精华' },
+        { keys: ['东京造形大学', '東京造形大学', '东造形大', 'zokei'], group: 'zokei', label: '东造形大' },
+        { keys: ['Gobelins', 'GOBELINS'], group: 'gobelins', label: 'Gobelins' },
+        { keys: ['CalArts', 'calarts'], group: 'calarts', label: 'CalArts' },
+        { keys: ['中国传媒大学', '中传'], group: 'other', label: '中传' },
+        { keys: ['北京电影学院', '北电'], group: 'other', label: '北电' },
+        { keys: ['清华大学美术学院', '清华美院', '清华'], group: 'other', label: '清华' },
+        { keys: ['Ringling'], group: 'other', label: 'Ringling' },
+        { keys: ['SVA', 'School of Visual Arts'], group: 'other', label: 'SVA' },
+        { keys: ['RCA', 'Royal College of Art'], group: 'other', label: 'RCA' },
+      ];
+      const allText = rawTitle + ' ' + desc;
+      let detectedGroup = '', detectedLabel = '';
+      for (const s of SCHOOL_MAP) {
+        if (s.keys.some(k => allText.includes(k))) { detectedGroup = s.group; detectedLabel = s.label; break; }
+      }
+      const gSel = document.getElementById('addGroup');
+      // 如果没识别到学校，但描述含奖项关键词 → 建议影展获奖
+      if (!detectedGroup) {
+        if (/[奖奥斯卡提名入围电影节]/.test(desc)) {
+          detectedGroup = 'festival';
+          detectedLabel = '影展获奖';
+        }
+      }
+      if (detectedGroup) gSel.value = detectedGroup;
+
+      // 5. 技法
+      let technique = techFromBracket || '';
+      if (!technique) {
+        const techHint = desc.match(/(2D|3D|定格|手绘|CGI|实验|水彩|水墨|沙画|剪纸|CG|ストップモーション|立体|人形)/);
+        if (techHint) {
+          const tmap = {2:'2D 手绘','3D':'3D CGI',定格:'定格动画',手绘:'2D 手绘',CGI:'3D CGI',实验:'实验动画',水彩:'水彩动画',水墨:'水墨动画',沙画:'沙画动画',剪纸:'剪纸动画',CG:'3D CGI',ストップモーション:'定格动画',立体:'3D CGI',人形:'人形动画'};
+          technique = tmap[techHint[1]] || techHint[1];
+        }
+      }
+      if (technique) document.getElementById('addTechnique').value = technique;
+
+      // 6. 国家：学校→国家 / 描述关键词
+      const COUNTRY_MAP = {
+        geidai:'日本', tama:'日本', seika:'日本', zokei:'日本',
+        gobelins:'法国', calarts:'美国',
+      };
+      if (detectedGroup && COUNTRY_MAP[detectedGroup]) {
+        document.getElementById('addCountry').value = COUNTRY_MAP[detectedGroup];
+      } else {
+        const cHint = desc.match(/来自\s*([^\n，,。\s]{2,6}?国)/) || desc.match(/(日本|中国|美国|法国|英国|韩国|伊朗|加拿大|俄罗斯|智利|台湾)/);
+        if (cHint) {
+          const known = {日本:'日本',中国:'中国',美国:'美国',法国:'法国',英国:'英国',韩国:'韩国',伊朗:'伊朗',加拿大:'加拿大',俄罗斯:'俄罗斯',智利:'智利',台湾:'中国'};
+          document.getElementById('addCountry').value = known[cHint[1]] || cHint[1];
+        }
+      }
+
+      // 7. 标签 + 奖项建议
+      const tags = [String(year)];
+      if (detectedLabel) tags.push(detectedLabel);
+      tags.push('B站');
+      if (technique) tags.push(technique);
+      document.getElementById('addTags').value = tags.join(', ');
+      // 奖项：从【】提取的奖项内容
+      if (awardFromBracket) {
+        document.getElementById('addAward').value = `🏆 ${awardFromBracket}`;
+      }
+
+      st.textContent='✅ B站 数据已自动填充，请核对并补充';
+      st.className='fetch-status ok';
+      // 封面隐藏域
+      let h = document.getElementById('_addCover');
+      if (!h) { h=document.createElement('input'); h.type='hidden'; h.id='_addCover'; document.getElementById('addUrl').parentNode.appendChild(h); }
+      h.value = v.pic || '';
+      // 预览
+      const prv = document.getElementById('addPreview');
+      prv.style.display='block';
+      prv.innerHTML = `<div class="preview-card"><div class="card-thumb" style="background:linear-gradient(135deg,#1a1a30,#0d0d1a)">${
+        v.pic ? `<img src="${v.pic}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''
+      }<div class="card-badges"><span class="badge badge-year">${year}</span></div></div><div class="card-body"><div class="card-title">${title}</div><div class="card-meta">${
+        dur ? `<span>⏱ ${dur}</span>` : ''
+      }${owner ? `<span>🎬 ${owner}</span>` : ''}</div><div class="card-desc">${(v.desc||'').slice(0,100)}</div></div></div>`;
+
+    } else {
+      // ---- YouTube 抓取 ----
+      const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${p.id}&format=json`);
+      if (!r.ok) throw new Error(`oEmbed ${r.status}`);
+      const d = await r.json();
+      const title = d.title;
+      const author = d.author_name || '';
+      const year = new Date().getFullYear();
+
+      document.getElementById('addTitle').value = title;
+      document.getElementById('addDirector').value = author ? `${author}（YouTube频道）` : '';
+      document.getElementById('addYear').value = year;
+      document.getElementById('addDesc').value = `${author} 发布`;
+      document.getElementById('addTags').value = `${year}, YouTube`;
+
+      st.textContent='✅ YouTube 数据已抓取，请补充并确认';
+      st.className='fetch-status ok';
+      // 封面隐藏域
+      let h = document.getElementById('_addCover');
+      if (!h) { h=document.createElement('input'); h.type='hidden'; h.id='_addCover'; document.getElementById('addUrl').parentNode.appendChild(h); }
+      h.value = d.thumbnail_url || '';
+      // 预览
+      const prv = document.getElementById('addPreview');
+      prv.style.display='block';
+      prv.innerHTML = `<div class="preview-card"><div class="card-thumb" style="background:linear-gradient(135deg,#1a1a30,#0d0d1a)">${
+        d.thumbnail_url ? `<img src="${d.thumbnail_url}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''
+      }<div class="card-badges"><span class="badge badge-year">${year}</span></div></div><div class="card-body"><div class="card-title">${title}</div><div class="card-meta">${
+        author ? `<span>🎬 ${author}</span>` : ''
+      }</div><div class="card-desc">${author} 发布</div></div></div>`;
+    }
+    document.getElementById('addDirector').focus();
+  } catch(e) {
+    st.textContent = p.type==='bilibili'
+      ? `❌ API 请求失败。请在桌面目录启动本地服务器：在终端运行 cd /c/Users/evawi/Desktop && python -m http.server 8000，然后访问 http://localhost:8000/动画精选平台.html`
+      : `❌ 抓取失败：${e.message}`;
+    st.className='fetch-status err';
+  } finally {
+    document.getElementById('fetchBtn').disabled = false;
+  }
+});
+
+// 提交添加
+document.getElementById('addSubmitBtn').addEventListener('click', () => {
+  const title = document.getElementById('addTitle').value.trim();
+  if (!title) { alert('请填写标题'); return; }
+  if (!_lastUrl) { alert('请先输入链接并抓取信息'); return; }
+  const added = getAddedWorks();
+  const h = document.getElementById('_addCover');
+  const tags = document.getElementById('addTags').value.trim();
+  const work = {
+    id: (function(){const a=getAllWorks();let n=a.length+1,id;do{id=_lastUrl.type==='bilibili'?`added-b${n}`:`added-yt${n}`;n++;}while(a.find(w=>w.id===id));return id;})(),
+    title, titleEn: title,
+    director: document.getElementById('addDirector').value.trim() || '—',
+    year: parseInt(document.getElementById('addYear').value) || new Date().getFullYear(),
+    group: document.getElementById('addGroup').value,
+    award: document.getElementById('addAward').value.trim(),
+    technique: document.getElementById('addTechnique').value.trim(),
+    country: document.getElementById('addCountry').value.trim(),
+    duration: document.getElementById('addDuration').value.trim(),
+    description: document.getElementById('addDesc').value.trim(),
+    tags: tags ? tags.split(/[,，]/).map(t=>t.trim()).filter(Boolean) : [],
+    ...(_lastUrl.type==='bilibili' ? {bvid:_lastUrl.id, bcover: (h?h.value:'')} : {vid:_lastUrl.id}),
+  };
+  added.push(work);
+  localStorage.setItem(ADD_WORKS_KEY, JSON.stringify(added));
+  render(); renderAddedList(); updateExportCode();
+  // 重置表单，准备添加下一部
+  ['addTitle','addDirector','addYear','addAward','addTechnique','addCountry','addDuration','addDesc','addTags'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addPreview').style.display='none';
+  document.getElementById('fetchStatus').textContent='✅ 已添加！继续下一部，或关闭';
+  document.getElementById('fetchStatus').className='fetch-status ok';
+  document.getElementById('addUrl').value=''; document.getElementById('addUrl').focus();
+  if(h) h.value=''; _lastUrl=null;
+});
+
+// 已添加作品管理 & 导出
+function renderAddedList() {
+  const a = getAddedWorks();
+  const b = document.getElementById('showAddedBtn');
+  b.style.display = a.length ? 'inline-flex' : 'none';
+  b.innerHTML = `📋 已添加 ${a.length} 部`;
+  b.onclick = a.length ? () => {
+    const names = a.map((w,i)=>`${i+1}. ${w.title}`).join('\n');
+    if (confirm(`已添加 ${a.length} 部（临时存储）：\n${names}\n\n点「确定」清除全部，点「取消」保留`)) {
+      localStorage.removeItem(ADD_WORKS_KEY); render(); renderAddedList(); updateExportCode();
+    }
+  } : null;
+}
+function updateExportCode() {
+  const a = getAddedWorks();
+  const bar = document.getElementById('exportBar');
+  const code = document.getElementById('exportCode');
+  if (!a.length) { bar.style.display='none'; return; }
+  bar.style.display='block';
+  code.value = a.map(w => {
+    const esc = s => (s||'').replace(/'/g,"\\'");
+    let r = `  {\n    id: '${w.id}',\n    title: '${esc(w.title)}',\n    titleEn: '${esc(w.titleEn)}',\n    director: '${esc(w.director)}',\n    year: ${w.year}, group: '${w.group}',\n`;
+    ['award','technique','country','duration'].forEach(k => { if(w[k]) r += `    ${k}: '${esc(w[k])}',\n`; });
+    if(w.description) r += `    description: '${esc(w.description)}',\n`;
+    if(w.bvid) { r += `    bvid: '${w.bvid}',\n`; if(w.bcover) r += `    bcover: '${w.bcover}',\n`; }
+    if(w.vid) r += `    vid: '${w.vid}',\n`;
+    r += `    tags: [${(w.tags||[]).map(t=>`'${esc(t)}'`).join(', ')}]\n  },`;
+    return r;
+  }).join('\n\n');
+}
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const code = document.getElementById('exportCode');
+  code.select();
+  navigator.clipboard.writeText(code.value).then(() => {
+    document.getElementById('exportBtn').textContent = '✅ 已复制！';
+    setTimeout(() => document.getElementById('exportBtn').textContent = '📋 复制 JS 代码到剪贴板（永久保存到 HTML）', 2000);
+  }).catch(() => { document.execCommand('copy'); alert('已复制到剪贴板，请粘贴到 HTML 的 WORKS 数组中'); });
+});
+
+// 搜索输入 + 一键清除
+function _toggleFav(id) {
+  const now = toggleFav(id);
+  // Update all fav buttons with this id
+  document.querySelectorAll(`[data-favid="${id}"]`).forEach(btn => {
+    btn.classList.toggle('active', now);
+    btn.textContent = now ? '❤️' : '♡';
+  });
+  // Update fav count
+  document.getElementById('favCount').textContent = favCount();
+  // Re-render if in fav-only mode
+  if (currentFav) render();
+}
+// 搜索输入 + 一键清除
+const searchInput = document.getElementById('searchInput');
+const searchClear = document.getElementById('searchClear');
+searchInput.addEventListener('input', e => {
+  searchQuery = e.target.value;
+  searchClear.style.display = e.target.value ? 'flex' : 'none';
+  render();
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  searchQuery = '';
+  searchClear.style.display = 'none';
+  render();
+  searchInput.focus();
+});
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// 一键回到顶部：滚动超过 500px 显示，点击平滑回顶
+const backToTopBtn = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  backToTopBtn.classList.toggle('show', window.scrollY > 500);
+}, { passive: true });
+backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+document.getElementById('favFilter').addEventListener('click', () => {
+  currentFav = !currentFav;
+  document.getElementById('favFilter').classList.toggle('active', currentFav);
+  render();
+});
+buildFilters();
+render();
+renderAddedList();
+</script>
+</body>
+</html>
